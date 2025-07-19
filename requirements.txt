@@ -1,3 +1,5 @@
 ipykernel
-loguru
 langchain
+python-dotenv
+langchain_groq
+-e .

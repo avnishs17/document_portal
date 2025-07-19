@@ -1,8 +1,4 @@
-from setuptools import setup,find_packages
-
-with open("requirements.txt") as f:
-    requirements = f.read().splitlines()
-
+from setuptools import setup, find_packages
 
 __version__ = "0.0.0"
 
@@ -19,5 +15,4 @@ setup(
     author_email=AUTHOR_EMAIL,
     description="Document Portal",
     packages=find_packages(),
-    install_requires = requirements,
 )
