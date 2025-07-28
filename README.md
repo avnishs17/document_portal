@@ -45,5 +45,5 @@ setup(
 ## Step 5: Install the package in editable mode
 
 ```bash
-pip install -e .
+pip install -r requirements.txt
 ```

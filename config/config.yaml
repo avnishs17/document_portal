@@ -12,7 +12,7 @@ retriever:
 llm:
   groq:
     provider: "groq"
-    model_name: "moonshotai/kimi-k2-instruct"
+    model_name: "qwen/qwen3-32b"
     temperature: 0
     max_output_tokens: 2048
 
