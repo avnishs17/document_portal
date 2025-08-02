@@ -6,8 +6,9 @@
 ```bash
 mkdir document_portal
 cd document_portal
-uv venv -p python3.11
-source .venv/bin/activate
+conda create -p env python=3.10.18 -y
+conda activate ./env
+pip install uv
 ```
 
 ## Step 2: Create a requirements.txt file
@@ -45,5 +46,5 @@ setup(
 ## Step 5: Install the package in editable mode
 
 ```bash
-pip install -r requirements.txt
+uv pip install -r requirements.txt
 ```

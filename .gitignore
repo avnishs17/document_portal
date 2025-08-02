@@ -1,8 +1,8 @@
-.venv/
+env/*
 .env
 *.egg-info/
 __pycache__/
 logs/
 *.pyc
-test.py
+tests/*
 data/

@@ -67,9 +67,8 @@ class DocumentHandler:
     
 if __name__ == "__main__":
     from pathlib import Path
-    from io import BytesIO
 
-    pdf_path=r"B:\\LLOPS\\document_portal\\data\\document_analysis\\2025_SENTINEL_Insider_Threat_Detection_Based_on_Multi-Timescale_User_Behavior_Interaction_Graph_Learning.pdf"
+    pdf_path=r"B:\\LLOPS\\document_portal\\data\\document_analysis\\sample.pdf"
     class DummnyFile:
         def __init__(self,file_path):
             self.name = Path(file_path).name
