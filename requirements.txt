@@ -5,12 +5,12 @@ langchain_groq
 langchain_google_genai
 langchain_community
 pypdf
-faiss-cpu
 structlog
 PyMuPDF
 pandas
 streamlit
 langchain-core[tracing]
 pytest
+faiss-cpu
 streamlit
 -e .
