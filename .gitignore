@@ -7,3 +7,4 @@ logs/
 tests/*
 data/
 faiss_index/
+archive/*
