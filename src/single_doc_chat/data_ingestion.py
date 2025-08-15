@@ -14,15 +14,11 @@ class SingleDocIngestor:
     def __init__(self,data_dir: str = "data/single_document_chat", faiss_dir: str = "faiss_index"):
         try:
             self.log = CustomLogger().get_logger(__name__)
-
             self.data_dir = Path(data_dir)
             self.data_dir.mkdir(parents=True, exist_ok=True)
-
             self.faiss_dir = Path(faiss_dir)
             self.faiss_dir.mkdir(parents=True, exist_ok=True)
-
             self.model_loader = ModelLoader()
-
             self.log.info("SingleDocIngestor initialized", temp_path=str(self.data_dir), faiss_path=str(self.faiss_dir))
         except Exception as e:
             self.log.error("Failed to initialize SingleDocIngestor", error=str(e))
@@ -43,7 +39,6 @@ class SingleDocIngestor:
                 loader = PyPDFLoader(str(temp_path))
                 docs = loader.load()
                 documents.extend(docs)
-
             self.log.info("PDF files loaded", count=len(documents))
             return self._create_retriever(documents)
                 
@@ -66,7 +61,6 @@ class SingleDocIngestor:
             
             retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 5})
             self.log.info("Retriever created successfully", retriever_type=str(type(retriever)))
-            
             return retriever  
         except Exception as e:
             self.log.error("Retriever creation failed", error=str(e))

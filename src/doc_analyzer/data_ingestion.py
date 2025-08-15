@@ -1,5 +1,6 @@
 import os
 import fitz
+import sys
 import uuid
 from datetime import datetime
 from logger.custom_logger import CustomLogger
@@ -17,7 +18,7 @@ class DocumentHandler:
                 "DATA_STORAGE_PATH",
                 os.path.join(os.getcwd(), "data", "document_analysis")
             )
-            self.session_id = session_id or f"session_{datetime.now(datetime.timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+            self.session_id = session_id or f"session_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
             
             # Create base session directory
             self.session_path = os.path.join(self.data_dir, self.session_id)
@@ -28,7 +29,7 @@ class DocumentHandler:
 
         except Exception as e:
             self.log.error(f"Error initializing DocumentHandler: {e}")
-            raise DocumentPortalException("Error initializing DocumentHandler", e) from e
+            raise DocumentPortalException("Error initializing DocumentHandler", sys)
         
 
     def save_pdf(self,uploaded_file):
@@ -36,7 +37,7 @@ class DocumentHandler:
             filename = os.path.basename(uploaded_file.name)
             
             if not filename.lower().endswith(".pdf"):
-                raise DocumentPortalException("Invalid file type. Only PDFs are allowed.")
+                raise DocumentPortalException("Invalid file type. Only PDFs are allowed.",sys)
 
             save_path = os.path.join(self.session_path, filename)
             
@@ -55,7 +56,7 @@ class DocumentHandler:
         try:
             text_chunks = []
             with fitz.open(pdf_path) as doc:
-                for page_num, page in enumerate(doc, start=1):
+                for page_num, page in enumerate(doc, start=1): # type: ignore
                     text_chunks.append(f"\n--- Page {page_num} ---\n{page.get_text()}")
             text = "\n".join(text_chunks)
 
@@ -67,8 +68,9 @@ class DocumentHandler:
     
 if __name__ == "__main__":
     from pathlib import Path
-
-    pdf_path=r"B:\\LLOPS\\document_portal\\data\\document_analysis\\sample.pdf"
+    from io import BytesIO
+    
+    pdf_path=r"C:\\Users\\sunny\\document_portal\\data\\document_analysis\\sample.pdf"
     class DummnyFile:
         def __init__(self,file_path):
             self.name = Path(file_path).name
