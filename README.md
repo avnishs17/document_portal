@@ -48,3 +48,7 @@ setup(
 ```bash
 uv pip install -r requirements.txt
 ```
+
+# command for executing the fast api
+# uvicorn api.main:app --port 8080 --reload    
+#uvicorn api.main:app --host 0.0.0.0 --port 8080 --reload
