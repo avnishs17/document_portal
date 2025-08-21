@@ -196,32 +196,6 @@ This setup provides **AWS ECS equivalent infrastructure** with complete control 
 
 # 🛠️ **Production Setup (One-Time)**
 
-## **🚀 Automated Setup (Recommended)**
-
-Use the provided PowerShell scripts for complete automated setup:
-
-```cmd
-# Interactive setup with menu
-scripts\manage-gcp.bat
-
-# Or direct PowerShell execution
-.\scripts\setup-gcp.ps1 -GroqApiKey "your-groq-key" -GoogleApiKey "your-google-key"
-```
-
-**What the automated scripts do:**
-- ✅ Configure GCP project settings
-- ✅ Enable all required APIs
-- ✅ Create service account with proper permissions  
-- ✅ Generate service account key
-- ✅ Create GCP secrets for API keys
-- ✅ Provide next steps for GitHub integration
-
-📖 **See `scripts/README.md` for detailed documentation**
-
----
-
-## **📋 Manual Setup (Advanced Users)**
-
 ## **Prerequisites for GCP Deployment**
 
 ### **1. Install Google Cloud CLI**
@@ -279,22 +253,12 @@ gcloud iam service-accounts keys create github-actions-key.json --iam-account=gi
 ```
 
 ### **Step 2: Create API Key Secrets**
-
-**🚀 Quick Setup (Recommended):**
-```cmd
-# Use the automated setup script
-scripts\manage-gcp.bat
-```
-
-**Manual Setup:**
 ```bash
 # Create secrets with your actual API keys (replace with real values)
 echo -n "your-actual-groq-api-key" | gcloud secrets create GROQ_API_KEY --data-file=-
 echo -n "your-actual-google-api-key" | gcloud secrets create GOOGLE_API_KEY --data-file=-
 echo -n "your-actual-langchain-api-key" | gcloud secrets create LANGCHAIN_API_KEY --data-file=-
 ```
-
-> 💡 **Note**: The automated scripts in the `scripts/` directory handle all these steps automatically with better error handling and validation. See `scripts/README.md` for detailed documentation.
 
 ### **Step 3: Setup GitHub Secret**
 1. Go to GitHub repo → **Settings** → **Secrets and variables** → **Actions**
@@ -412,35 +376,6 @@ gcloud container clusters resize document-portal-cluster --num-nodes=3 --zone=as
 # 🗑️ **Cleanup Commands (Delete Everything)**
 
 **⚠️ WARNING: These commands will permanently delete all GCP resources!**
-
-## **🚀 Automated Cleanup (Recommended)**
-
-Use the automated cleanup script for safe and complete removal:
-
-```cmd
-# Interactive cleanup with confirmations
-scripts\manage-gcp.bat
-
-# Or direct PowerShell execution
-.\scripts\cleanup-gcp.ps1
-
-# Force cleanup (skip confirmations)
-.\scripts\cleanup-gcp.ps1 -Force
-```
-
-**What the automated cleanup does:**
-- 🗑️ Deletes Kubernetes deployments and secrets
-- 🗑️ Destroys Terraform infrastructure (VPC, GKE, etc.)
-- 🗑️ Removes Docker images and Artifact Registry
-- 🗑️ Deletes GCP secrets and service accounts
-- 🗑️ Cleans up local key files
-- 🗑️ Verifies complete cleanup
-
-📖 **See `scripts/README.md` for detailed documentation**
-
----
-
-## **📋 Manual Cleanup (Advanced Users)**
 
 ## **Complete GKE Infrastructure Cleanup**
 

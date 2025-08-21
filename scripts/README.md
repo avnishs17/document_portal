@@ -37,7 +37,8 @@ scripts\manage-gcp.bat
 
 **Setup:**
 ```powershell
-.\scripts\setup-gcp.ps1 -GroqApiKey "your-groq-key" -GoogleApiKey "your-google-key" -LangchainApiKey "your-langchain-key"
+# Interactive setup - prompts for API keys securely
+.\scripts\setup-gcp.ps1
 ```
 
 **Cleanup:**
@@ -61,9 +62,8 @@ scripts\manage-gcp.bat
 | `ProjectId` | No | `build-test-468516` | GCP Project ID |
 | `Region` | No | `asia-south1` | GCP Region |
 | `Zone` | No | `asia-south1-b` | GCP Zone |
-| `GroqApiKey` | **Yes** | - | Your GROQ API key |
-| `GoogleApiKey` | **Yes** | - | Your Google AI API key |
-| `LangchainApiKey` | No | - | Your LangChain API key (optional) |
+
+*Note: API keys are prompted securely during script execution*
 
 ### **Cleanup Script Parameters**
 
@@ -107,23 +107,11 @@ scripts\manage-gcp.bat
 
 ### **Complete Setup Example:**
 ```powershell
-# Run setup with all parameters
-.\scripts\setup-gcp.ps1 `
-  -ProjectId "my-project-123" `
-  -GroqApiKey "gsk_xyz123..." `
-  -GoogleApiKey "AIzaSyD..." `
-  -LangchainApiKey "ls__abc456..."
-```
+# Run setup - will prompt for API keys securely
+.\scripts\setup-gcp.ps1
 
-### **Custom Project Setup:**
-```powershell
-# Setup with different project and region
-.\scripts\setup-gcp.ps1 `
-  -ProjectId "my-custom-project" `
-  -Region "us-central1" `
-  -Zone "us-central1-a" `
-  -GroqApiKey "your-groq-key" `
-  -GoogleApiKey "your-google-key"
+# Custom project setup
+.\scripts\setup-gcp.ps1 -ProjectId "my-custom-project" -Region "us-central1" -Zone "us-central1-a"
 ```
 
 ### **Force Cleanup:**
@@ -138,8 +126,8 @@ scripts\manage-gcp.bat
 
 ### **1. Initial Setup**
 ```powershell
-# Run setup script
-.\scripts\setup-gcp.ps1 -GroqApiKey "your-key" -GoogleApiKey "your-key"
+# Run setup script (will prompt for API keys)
+.\scripts\setup-gcp.ps1
 
 # Add the generated key to GitHub Secrets
 # Go to: Repository → Settings → Secrets → Actions

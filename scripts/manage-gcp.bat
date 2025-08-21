@@ -25,15 +25,9 @@ goto :eof
 echo.
 echo Starting GCP Setup...
 echo.
-set /p groq_key="Enter your GROQ API key: "
-set /p google_key="Enter your Google AI API key: "
-set /p langchain_key="Enter your LangChain API key (optional, press Enter to skip): "
-
-if "%langchain_key%"=="" (
-    powershell -ExecutionPolicy Bypass -File "scripts\setup-gcp.ps1" -GroqApiKey "%groq_key%" -GoogleApiKey "%google_key%"
-) else (
-    powershell -ExecutionPolicy Bypass -File "scripts\setup-gcp.ps1" -GroqApiKey "%groq_key%" -GoogleApiKey "%google_key%" -LangchainApiKey "%langchain_key%"
-)
+echo The setup script will prompt you securely for your API keys.
+echo.
+powershell -ExecutionPolicy Bypass -File "scripts\setup-gcp.ps1"
 pause
 goto :eof
 

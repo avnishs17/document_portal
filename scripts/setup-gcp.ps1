@@ -33,16 +33,7 @@ param(
     [string]$Region = "asia-south1",
     
     [Parameter(Mandatory=$false)]
-    [string]$Zone = "asia-south1-b",
-    
-    [Parameter(Mandatory=$true)]
-    [string]$GroqApiKey,
-    
-    [Parameter(Mandatory=$true)]
-    [string]$GoogleApiKey,
-    
-    [Parameter(Mandatory=$false)]
-    [string]$LangchainApiKey
+    [string]$Zone = "asia-south1-b"
 )
 
 # Color functions for better output
@@ -232,14 +223,29 @@ function Start-GcpSetup {
     # Create Secrets
     Write-Header "Creating API Key Secrets"
     
+    # Prompt for API keys securely
+    Write-Info "Please provide your API keys (input will be hidden for security):"
+    
+    Write-Host "Enter your GROQ API key: " -NoNewline -ForegroundColor Yellow
+    $GroqApiKey = Read-Host -AsSecureString
+    $GroqApiKeyPlain = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($GroqApiKey))
+    
+    Write-Host "Enter your Google AI API key: " -NoNewline -ForegroundColor Yellow
+    $GoogleApiKey = Read-Host -AsSecureString
+    $GoogleApiKeyPlain = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($GoogleApiKey))
+    
+    Write-Host "Enter your LangChain API key (optional, press Enter to skip): " -NoNewline -ForegroundColor Yellow
+    $LangchainApiKey = Read-Host -AsSecureString
+    $LangchainApiKeyPlain = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($LangchainApiKey))
+    
     Write-Info "Creating GROQ API key secret..."
     try {
-        echo $GroqApiKey | gcloud secrets create GROQ_API_KEY --data-file=- 2>$null
+        Write-Output $GroqApiKeyPlain | gcloud secrets create GROQ_API_KEY --data-file=- 2>$null
         if ($LASTEXITCODE -eq 0) {
             Write-Success "GROQ_API_KEY secret created"
         } else {
             Write-Warning "GROQ_API_KEY secret already exists, updating..."
-            echo $GroqApiKey | gcloud secrets versions add GROQ_API_KEY --data-file=-
+            Write-Output $GroqApiKeyPlain | gcloud secrets versions add GROQ_API_KEY --data-file=-
             Write-Success "GROQ_API_KEY secret updated"
         }
     }
@@ -249,12 +255,12 @@ function Start-GcpSetup {
     
     Write-Info "Creating Google API key secret..."
     try {
-        echo $GoogleApiKey | gcloud secrets create GOOGLE_API_KEY --data-file=- 2>$null
+        Write-Output $GoogleApiKeyPlain | gcloud secrets create GOOGLE_API_KEY --data-file=- 2>$null
         if ($LASTEXITCODE -eq 0) {
             Write-Success "GOOGLE_API_KEY secret created"
         } else {
             Write-Warning "GOOGLE_API_KEY secret already exists, updating..."
-            echo $GoogleApiKey | gcloud secrets versions add GOOGLE_API_KEY --data-file=-
+            Write-Output $GoogleApiKeyPlain | gcloud secrets versions add GOOGLE_API_KEY --data-file=-
             Write-Success "GOOGLE_API_KEY secret updated"
         }
     }
@@ -262,15 +268,15 @@ function Start-GcpSetup {
         Write-Error "Failed to create GOOGLE_API_KEY secret"
     }
     
-    if (-not [string]::IsNullOrEmpty($LangchainApiKey)) {
+    if (-not [string]::IsNullOrEmpty($LangchainApiKeyPlain)) {
         Write-Info "Creating LangChain API key secret..."
         try {
-            echo $LangchainApiKey | gcloud secrets create LANGCHAIN_API_KEY --data-file=- 2>$null
+            Write-Output $LangchainApiKeyPlain | gcloud secrets create LANGCHAIN_API_KEY --data-file=- 2>$null
             if ($LASTEXITCODE -eq 0) {
                 Write-Success "LANGCHAIN_API_KEY secret created"
             } else {
                 Write-Warning "LANGCHAIN_API_KEY secret already exists, updating..."
-                echo $LangchainApiKey | gcloud secrets versions add LANGCHAIN_API_KEY --data-file=-
+                Write-Output $LangchainApiKeyPlain | gcloud secrets versions add LANGCHAIN_API_KEY --data-file=-
                 Write-Success "LANGCHAIN_API_KEY secret updated"
             }
         }
@@ -280,6 +286,15 @@ function Start-GcpSetup {
     } else {
         Write-Info "LangChain API key not provided, skipping..."
     }
+    
+    # Clear sensitive variables from memory
+    $secretsCreated = "GROQ_API_KEY, GOOGLE_API_KEY"
+    if (-not [string]::IsNullOrEmpty($LangchainApiKeyPlain)) {
+        $secretsCreated += ", LANGCHAIN_API_KEY"
+    }
+    $GroqApiKeyPlain = $null
+    $GoogleApiKeyPlain = $null
+    $LangchainApiKeyPlain = $null
     
     # Final Summary
     Write-Header "Setup Complete!"
@@ -293,7 +308,7 @@ function Start-GcpSetup {
     Write-Host "  • Key File: $keyFile" -ForegroundColor Gray
     Write-Host "  • APIs Enabled: $(($apis).Count) APIs" -ForegroundColor Gray
     Write-Host "  • IAM Roles: $(($roles).Count) roles granted" -ForegroundColor Gray
-    Write-Host "  • Secrets Created: GROQ_API_KEY, GOOGLE_API_KEY$(if($LangchainApiKey){', LANGCHAIN_API_KEY'})" -ForegroundColor Gray
+    Write-Host "  • Secrets Created: $secretsCreated" -ForegroundColor Gray
     
     Write-Warning "`n📋 Next Steps:"
     Write-Host "1. Add the content of '$keyFile' to GitHub repository secrets as 'GCP_SERVICE_ACCOUNT_KEY'" -ForegroundColor Yellow
