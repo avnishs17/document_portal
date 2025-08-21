@@ -404,10 +404,10 @@ Remove-Item -Path "terraform.tfstate*" -Force
 ### **Step 3: Delete Docker Images**
 ```bash
 # Delete all Docker images in the repository
-gcloud artifacts docker images list asia-south1-docker.pkg.dev/build-test-468516/document-portal --format="value(IMAGE_URI)" | ForEach-Object { gcloud artifacts docker images delete $_ --quiet }
+gcloud artifacts docker images list asia-south1-docker.pkg.dev/build-test-468516/document-portal --format="value(IMAGE_URI)" | ForEach-Object { gcloud artifacts docker images delete $_ }
 
 # Delete the entire Artifact Registry repository
-gcloud artifacts repositories delete document-portal --location=asia-south1 --quiet
+gcloud artifacts.repositories.delete document-portal --location=asia-south1
 ```
 
 ### **Step 4: Delete VPC and Networking Resources**
@@ -429,9 +429,9 @@ gcloud compute networks delete document-portal-vpc
 ### **Step 5: Delete GCP Secrets**
 ```bash
 # Delete all secrets
-gcloud secrets delete GROQ_API_KEY --quiet
-gcloud secrets delete GOOGLE_API_KEY --quiet
-gcloud secrets delete LANGCHAIN_API_KEY --quiet
+gcloud secrets delete GROQ_API_KEY
+gcloud secrets delete GOOGLE_API_KEY
+gcloud secrets delete LANGCHAIN_API_KEY
 ```
 
 ### **Step 6: Remove Service Account and Permissions**
@@ -439,20 +439,20 @@ gcloud secrets delete LANGCHAIN_API_KEY --quiet
 # Remove IAM policy bindings
 $PROJECT_ID = "build-test-468516"
 
-gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/container.admin" --quiet
-gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/artifactregistry.admin" --quiet
-gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/secretmanager.admin" --quiet
-gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/iam.serviceAccountUser" --quiet
-gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/compute.admin" --quiet
-gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/iam.serviceAccountAdmin" --quiet
-gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/resourcemanager.projectIamAdmin" --quiet
-gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/editor" --quiet
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/container.admin"
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/artifactregistry.admin"
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/secretmanager.admin"
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/iam.serviceAccountUser"
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/compute.admin"
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/iam.serviceAccountAdmin"
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/resourcemanager.projectIamAdmin"
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/editor"
 
 # Delete service account keys
-gcloud iam service-accounts keys list --iam-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com --format="value(name)" | ForEach-Object { gcloud iam service-accounts keys delete $_ --iam-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com --quiet }
+gcloud iam service-accounts keys list --iam-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com --format="value(name)" | ForEach-Object { gcloud iam service-accounts keys delete $_ --iam-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com }
 
 # Delete service account
-gcloud iam service-accounts delete github-actions@$PROJECT_ID.iam.gserviceaccount.com --quiet
+gcloud iam service-accounts delete github-actions@$PROJECT_ID.iam.gserviceaccount.com
 ```
 
 ### **Step 7: Delete Local Files**
