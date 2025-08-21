@@ -415,6 +415,7 @@ gcloud artifacts repositories delete document-portal --location=asia-south1 --qu
 # Delete all secrets
 gcloud secrets delete GROQ_API_KEY --quiet
 gcloud secrets delete GOOGLE_API_KEY --quiet
+gcloud secrets delete LANGCHAIN_API_KEY --quiet
 ```
 
 ### **Step 5: Remove Service Account and Permissions**
