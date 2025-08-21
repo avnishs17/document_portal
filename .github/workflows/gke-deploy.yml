@@ -96,7 +96,13 @@ jobs:
           terraform import google_compute_global_address.document_portal_ip projects/${{ env.GCP_PROJECT_ID }}/global/addresses/document-portal-ip || true
         fi
         
-        terraform apply -auto-approve -var="project_id=${{ env.GCP_PROJECT_ID }}" -var="region=${{ env.GCP_REGION }}" -var="zone=${{ env.GCP_ZONE }}"
+        # Create a new plan after imports (if any were done)
+        echo "Creating execution plan..."
+        terraform plan -out=tfplan -var="project_id=${{ env.GCP_PROJECT_ID }}" -var="region=${{ env.GCP_REGION }}" -var="zone=${{ env.GCP_ZONE }}"
+        
+        # Apply the plan
+        echo "Applying infrastructure changes..."
+        terraform apply -auto-approve tfplan
 
     - name: Get GKE Credentials
       run: |
