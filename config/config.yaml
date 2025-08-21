@@ -1,6 +1,11 @@
 faiss_db:
   collection_name: "document_portal"
 
+# LangSmith tracking configuration
+langsmith:
+  enabled: true  # Set to false to disable tracking
+  project_name: "DOCUMENT_PORTAL"  # Project name in LangSmith
+  environment: "production"  # Environment tag for tracking
 
 embedding_model:
   provider: "google"

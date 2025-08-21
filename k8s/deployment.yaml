@@ -30,23 +30,18 @@ spec:
             secretKeyRef:
               name: groq-api-key
               key: api-key
-        - name: HF_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: hf-token
-              key: token
         - name: GOOGLE_API_KEY
           valueFrom:
             secretKeyRef:
               name: google-api-key
               key: api-key
+        # Optional: LangChain API key for LangSmith tracking (if secret exists)
         - name: LANGCHAIN_API_KEY
           valueFrom:
             secretKeyRef:
               name: langchain-api-key
               key: api-key
-        - name: LANGCHAIN_PROJECT
-          value: "DOCUMENT PORTAL"
+              optional: true
         
         # Resource requests and limits (much more than Cloud Run allows)
         resources:

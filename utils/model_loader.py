@@ -19,9 +19,46 @@ class ModelLoader:
     def __init__(self):
         
         load_dotenv()
-        self._validate_env()
         self.config=load_config()
+        self._setup_langsmith_tracking()
+        self._validate_env()
         log.info("Configuration loaded successfully", config_keys=list(self.config.keys()))
+        
+    def _setup_langsmith_tracking(self):
+        """
+        Setup LangSmith tracking based on config.yaml settings.
+        Only enables if both config is enabled and LANGCHAIN_API_KEY is provided.
+        """
+        langsmith_config = self.config.get("langsmith", {})
+        langsmith_enabled = langsmith_config.get("enabled", False)
+        langchain_api_key = os.getenv("LANGCHAIN_API_KEY")
+        
+        if langsmith_enabled and langchain_api_key:
+            # Get project name and environment from config
+            project_name = langsmith_config.get("project_name", "DOCUMENT_PORTAL")
+            environment = langsmith_config.get("environment", "production")
+            
+            # Enable LangSmith tracing
+            os.environ["LANGCHAIN_TRACING_V2"] = "true"
+            os.environ["LANGCHAIN_API_KEY"] = langchain_api_key
+            os.environ["LANGCHAIN_PROJECT"] = project_name
+            
+            # Set environment tag if provided
+            if environment:
+                os.environ["LANGCHAIN_TAGS"] = environment
+                
+            log.info("LangSmith tracking enabled", 
+                    project=project_name, 
+                    environment=environment,
+                    enabled=langsmith_enabled)
+        else:
+            reasons = []
+            if not langsmith_enabled:
+                reasons.append("disabled in config")
+            if not langchain_api_key:
+                reasons.append("no LANGCHAIN_API_KEY")
+            
+            log.info("LangSmith tracking disabled", reasons=reasons)
         
     def _validate_env(self):
         """
@@ -29,12 +66,18 @@ class ModelLoader:
         Ensure API keys exist.
         """
         required_vars=["GOOGLE_API_KEY","GROQ_API_KEY"]
-        self.api_keys={key:os.getenv(key) for key in required_vars}
-        missing = [k for k, v in self.api_keys.items() if not v]
+        # LangChain API key is optional for tracking
+        optional_vars=["LANGCHAIN_API_KEY"]
+        
+        self.api_keys={key:os.getenv(key) for key in required_vars + optional_vars}
+        missing = [k for k in required_vars if not self.api_keys.get(k)]
+        
         if missing:
             log.error("Missing environment variables", missing_vars=missing)
             raise DocumentPortalException("Missing environment variables", sys)
-        log.info("Environment variables validated", available_keys=[k for k in self.api_keys if self.api_keys[k]])
+            
+        available_keys = [k for k in self.api_keys if self.api_keys[k]]
+        log.info("Environment variables validated", available_keys=available_keys)
         
     def load_embeddings(self):
         """
