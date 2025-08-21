@@ -131,10 +131,10 @@ jobs:
           echo "✅ Found existing GKE cluster - importing..."
           terraform import google_container_cluster.document_portal_cluster projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_ZONE }}/clusters/${{ env.GKE_CLUSTER }} || true
           
-          # Only check for node pool if cluster exists
-          if gcloud container node-pools describe default-pool --cluster=${{ env.GKE_CLUSTER }} --zone=${{ env.GCP_ZONE }} --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
+          # Only check for node pool if cluster exists (check for the correct node pool name)
+          if gcloud container node-pools describe document-portal-nodes --cluster=${{ env.GKE_CLUSTER }} --zone=${{ env.GCP_ZONE }} --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
             echo "✅ Found existing node pool - importing..."
-            terraform import google_container_node_pool.document_portal_nodes projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_ZONE }}/clusters/${{ env.GKE_CLUSTER }}/nodePools/default-pool || true
+            terraform import google_container_node_pool.document_portal_nodes projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_ZONE }}/clusters/${{ env.GKE_CLUSTER }}/nodePools/document-portal-nodes || true
           else
             echo "❌ Node pool not found - will be created"
           fi
