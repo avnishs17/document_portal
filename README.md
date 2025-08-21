@@ -116,6 +116,11 @@ gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:gith
 
 # Grant IAM permissions
 gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/iam.serviceAccountUser"
+
+# IMPORTANT: Grant Secret Manager Secret Accessor role to Compute Engine service account
+# This allows Cloud Run to access the secrets (replace PROJECT_NUMBER with your actual project number)
+$PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:$PROJECT_NUMBER-compute@developer.gserviceaccount.com" --role="roles/secretmanager.secretAccessor"
 ```
 
 ### Step 4: Create Service Account Key
@@ -267,6 +272,188 @@ gcloud run services update document-portal --region=us-central1 --memory=4Gi --c
 2. **Push to Master** → GitHub Actions automatically builds and deploys
 3. **Monitor** → Check GitHub Actions and Cloud Run logs
 4. **Access** → Service URL provided in deployment logs
+
+---
+
+# 🗑️ Cleanup Commands (Delete Everything)
+
+**⚠️ WARNING: These commands will permanently delete all GCP resources and cannot be undone!**
+
+Use these commands when you want to completely remove all GCP resources and clean up your project.
+
+## Complete Cleanup Script
+
+```bash
+# Set your project ID
+$PROJECT_ID="build-test-468516"  # Replace with your actual project ID
+gcloud config set project $PROJECT_ID
+
+# 1. Delete Cloud Run Service
+echo "Deleting Cloud Run service..."
+gcloud run services delete document-portal --region=asia-south1 --quiet
+
+# 2. Delete Docker Images from Artifact Registry
+echo "Deleting Docker images..."
+gcloud artifacts docker images delete asia-south1-docker.pkg.dev/$PROJECT_ID/document-portal/document-portal --delete-tags --quiet
+
+# 3. Delete Artifact Registry Repository
+echo "Deleting Artifact Registry repository..."
+gcloud artifacts repositories delete document-portal --location=asia-south1 --quiet
+
+# 4. Delete All Secrets
+echo "Deleting secrets..."
+gcloud secrets delete GROQ_API_KEY --quiet
+gcloud secrets delete HF_TOKEN --quiet
+gcloud secrets delete GOOGLE_API_KEY --quiet
+gcloud secrets delete LANGCHAIN_API_KEY --quiet
+
+# 5. Delete Service Account Keys
+echo "Deleting service account keys..."
+# List and delete all keys for the service account
+gcloud iam service-accounts keys list --iam-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com --format="value(name)" | ForEach-Object {
+    gcloud iam service-accounts keys delete $_ --iam-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com --quiet
+}
+
+# 6. Remove IAM Policy Bindings
+echo "Removing IAM policy bindings..."
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/run.admin" --quiet
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/artifactregistry.admin" --quiet
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/secretmanager.admin" --quiet
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/iam.serviceAccountUser" --quiet
+
+# Remove Secret Manager Secret Accessor role from Compute Engine service account
+$PROJECT_NUMBER = (gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:$PROJECT_NUMBER-compute@developer.gserviceaccount.com" --role="roles/secretmanager.secretAccessor" --quiet
+
+# 7. Delete Service Account
+echo "Deleting service account..."
+gcloud iam service-accounts delete github-actions@$PROJECT_ID.iam.gserviceaccount.com --quiet
+
+# 8. Delete Local Files
+echo "Deleting local files..."
+Remove-Item -Path "github-actions-key.json" -Force -ErrorAction SilentlyContinue
+
+# 9. Optional: Disable APIs (if not used by other services)
+echo "Disabling APIs (optional)..."
+# gcloud services disable run.googleapis.com --force --quiet
+# gcloud services disable artifactregistry.googleapis.com --force --quiet
+# gcloud services disable secretmanager.googleapis.com --force --quiet
+# gcloud services disable cloudbuild.googleapis.com --force --quiet
+
+echo "✅ Cleanup completed successfully!"
+echo "📝 Remember to also delete GitHub repository secrets:"
+echo "   - Go to GitHub repo → Settings → Secrets and variables → Actions"
+echo "   - Delete: GCP_SERVICE_ACCOUNT_KEY"
+```
+
+## Individual Cleanup Commands
+
+If you prefer to delete resources one by one:
+
+### 1. Delete Cloud Run Service
+```bash
+gcloud run services delete document-portal --region=asia-south1
+```
+
+### 2. Delete Docker Images
+```bash
+# List images first
+gcloud artifacts docker images list asia-south1-docker.pkg.dev/$PROJECT_ID/document-portal
+
+# Delete specific image
+gcloud artifacts docker images delete asia-south1-docker.pkg.dev/$PROJECT_ID/document-portal/document-portal:TAG_NAME
+
+# Delete all images in repository
+gcloud artifacts docker images delete asia-south1-docker.pkg.dev/$PROJECT_ID/document-portal/document-portal --delete-tags
+```
+
+### 3. Delete Artifact Registry Repository
+```bash
+gcloud artifacts repositories delete document-portal --location=asia-south1
+```
+
+### 4. Delete Secrets
+```bash
+gcloud secrets delete GROQ_API_KEY
+gcloud secrets delete HF_TOKEN
+gcloud secrets delete GOOGLE_API_KEY
+gcloud secrets delete LANGCHAIN_API_KEY
+```
+
+### 5. Delete Service Account Keys and Account
+```bash
+# List service account keys
+gcloud iam service-accounts keys list --iam-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com
+
+# Delete specific key (replace KEY_ID)
+gcloud iam service-accounts keys delete KEY_ID --iam-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com
+
+# Delete service account
+gcloud iam service-accounts delete github-actions@$PROJECT_ID.iam.gserviceaccount.com
+```
+
+### 6. Remove IAM Policy Bindings
+```bash
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/run.admin"
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/artifactregistry.admin"
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/secretmanager.admin"
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/iam.serviceAccountUser"
+
+# Remove Secret Manager Secret Accessor role from Compute Engine service account
+$PROJECT_NUMBER = (gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:$PROJECT_NUMBER-compute@developer.gserviceaccount.com" --role="roles/secretmanager.secretAccessor"
+```
+
+### 7. Delete Local Files
+```bash
+# Windows PowerShell
+Remove-Item -Path "github-actions-key.json" -Force
+
+# Or manually delete the github-actions-key.json file
+```
+
+### 8. GitHub Repository Cleanup
+**Manual steps required:**
+1. Go to your GitHub repository
+2. Navigate to: **Settings** → **Secrets and variables** → **Actions**
+3. Delete the secret: `GCP_SERVICE_ACCOUNT_KEY`
+
+## Verification Commands
+
+After cleanup, verify everything is deleted:
+
+```bash
+# Check Cloud Run services
+gcloud run services list --region=asia-south1
+
+# Check Artifact Registry repositories
+gcloud artifacts repositories list --location=asia-south1
+
+# Check secrets
+gcloud secrets list
+
+# Check service accounts
+gcloud iam service-accounts list --filter="email:github-actions@*"
+
+# Check for any remaining IAM bindings
+gcloud projects get-iam-policy $PROJECT_ID --flatten="bindings[].members" --format="table(bindings.role)" --filter="bindings.members:github-actions@*"
+```
+
+## 🚨 Final Warning
+
+**These cleanup commands will:**
+- ❌ Delete your deployed application completely
+- ❌ Remove all Docker images and container registry
+- ❌ Delete all API keys and secrets (cannot be recovered)
+- ❌ Remove service accounts and access permissions
+- ❌ Delete local service account key files
+
+**Make sure you:**
+- ✅ Have backups of any important data
+- ✅ Have noted down your API keys if you plan to use them elsewhere
+- ✅ Are certain you want to completely remove the project
+
+**Cost Impact:** After cleanup, you will stop incurring charges for these GCP resources.
 
 
 
