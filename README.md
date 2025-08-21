@@ -225,7 +225,7 @@ gcloud config set compute/zone asia-south1-b
 ### **Step 1: Enable APIs & Create Service Account**
 ```bash
 # Enable all required APIs
-gcloud services enable compute.googleapis.com container.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com cloudbuild.googleapis.com servicenetworking.googleapis.com
+gcloud services enable compute.googleapis.com container.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com cloudbuild.googleapis.com servicenetworking.googleapis.com cloudresourcemanager.googleapis.com
 
 # Create service account with all permissions
 gcloud iam service-accounts create github-actions --description="Service account for GitHub Actions" --display-name="GitHub Actions"
