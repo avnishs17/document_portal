@@ -186,10 +186,11 @@ This setup provides **AWS ECS equivalent infrastructure** with complete control 
 - **Smart resource handling** - Automatically imports existing resources to avoid conflicts
 
 ### **🔧 Intelligent Resource Management:**
-- **Detects existing resources** - VPC, service accounts, IP addresses
+- **Detects existing resources** - VPC, service accounts, IP addresses, GKE clusters
 - **Imports automatically** - No conflicts from previous deployments
 - **Handles partial deployments** - Gracefully continues from any point
 - **No manual cleanup needed** - Smart enough to work with existing infrastructure
+- **Updates existing clusters** - Deploys new workloads to existing GKE clusters without recreating them
 
 ---
 
@@ -280,9 +281,10 @@ git push origin master
 1. ✅ **Plan Infrastructure** - Reviews Terraform changes
 2. ✅ **Import Existing Resources** - Automatically imports any existing resources to avoid conflicts
 3. ✅ **Deploy Infrastructure** - Creates VPC, GKE cluster, service accounts (or uses existing ones)
-4. ✅ **Build Docker Image** - Builds and pushes to Artifact Registry  
-5. ✅ **Deploy to GKE** - Creates Kubernetes secrets and deploys application
-6. ✅ **Get External IP** - Shows you the URL to access your app
+4. ✅ **Update Existing Clusters** - Deploys workloads to existing clusters without recreation
+5. ✅ **Build Docker Image** - Builds and pushes to Artifact Registry  
+6. ✅ **Deploy to GKE** - Creates Kubernetes secrets and deploys application
+7. ✅ **Get External IP** - Shows you the URL to access your app
 
 ## **Check Deployment Status:**
 - Go to GitHub repo → **Actions** tab

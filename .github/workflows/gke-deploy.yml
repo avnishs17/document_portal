@@ -113,6 +113,18 @@ jobs:
           terraform import google_compute_global_address.document_portal_ip projects/${{ env.GCP_PROJECT_ID }}/global/addresses/document-portal-ip || true
         fi
         
+        # Import GKE cluster if it exists
+        if gcloud container clusters describe ${{ env.GKE_CLUSTER }} --zone=${{ env.GCP_ZONE }} --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
+          echo "Importing existing GKE cluster..."
+          terraform import google_container_cluster.document_portal_cluster projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_ZONE }}/clusters/${{ env.GKE_CLUSTER }} || true
+        fi
+        
+        # Import GKE node pool if it exists
+        if gcloud container node-pools describe default-pool --cluster=${{ env.GKE_CLUSTER }} --zone=${{ env.GCP_ZONE }} --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
+          echo "Importing existing GKE node pool..."
+          terraform import google_container_node_pool.document_portal_nodes projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_ZONE }}/clusters/${{ env.GKE_CLUSTER }}/nodePools/default-pool || true
+        fi
+        
         # Create a new plan after imports (if any were done)
         echo "Creating execution plan..."
         terraform plan -out=tfplan -var="project_id=${{ env.GCP_PROJECT_ID }}" -var="region=${{ env.GCP_REGION }}" -var="zone=${{ env.GCP_ZONE }}"
