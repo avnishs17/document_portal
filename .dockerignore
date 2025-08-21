@@ -9,5 +9,3 @@ venv/
 .gitignore
 *.log
 logs/
-github-actions-key.json
-.env
