@@ -9,3 +9,4 @@ faiss_index/
 archive/
 notebook/
 data/
+github-actions-key.json
