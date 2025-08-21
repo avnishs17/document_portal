@@ -1,55 +1,329 @@
 
 # Setup Guide for `document_portal`
 
-## Step 1: Create project directory and virtual environment
+## 🚀 **Two Deployment Options**
 
-```bash
-mkdir document_portal
-cd document_portal
-conda create -p env python=3.10.18 -y
-conda activate ./env
-pip install uv
+### Option 1: **Serverless Cloud Run** (Simple, but limited performance)
+- ✅ Quick setup, fully managed
+- ❌ Limited resources (max 8GB RAM, 4 vCPUs)
+- ❌ Cold starts, less control
+
+### Option 2: **Full Infrastructure Control with GKE** (AWS ECS equivalent)
+- ✅ Full control over compute resources (up to 96 vCPUs, 360GB RAM)
+- ✅ Custom VPC, subnets, networking
+- ✅ Auto-scaling, load balancing
+- ✅ No cold starts, consistent performance
+- ✅ Production-grade infrastructure
+
+---
+
+# 🏗️ **RECOMMENDED: Full Infrastructure Control (GKE)**
+
+This setup provides AWS ECS equivalent infrastructure with complete control over networking, compute, and scaling.
+
+## Prerequisites
+
+### 1. Install Required Tools
+
+**Windows (PowerShell):**
+```powershell
+# Install Google Cloud CLI
+choco install gcloudsdk
+
+# Install Terraform
+choco install terraform
+
+# Install kubectl (if not installed with gcloud)
+gcloud components install kubectl
+
+# Initialize gcloud
+gcloud init
+gcloud auth login
 ```
 
-## Step 2: Create a requirements.txt file
-
+**Linux/Mac:**
 ```bash
-# Step 3: Create basic project structure and files
-# Step 4: Add the following to setup.py
+# Install Google Cloud CLI
+curl https://sdk.cloud.google.com | bash
+exec -l $SHELL
 
-```bash
-from setuptools import setup,find_packages
+# Install Terraform
+wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install terraform
 
-with open("requirements.txt") as f:
-    requirements = f.read().splitlines()
-
-
-__version__ = "0.0.0"
-
-REPO_NAME = "document_portal"
-AUTHOR_USER_NAME = "avnishs17"
-SRC_REPO = "document_portal"
-AUTHOR_EMAIL = "avnish1708@gmail.com"
-
-
-setup(
-    name=SRC_REPO,
-    version=__version__,
-    author=AUTHOR_USER_NAME,
-    author_email=AUTHOR_EMAIL,
-    description="Document Portal",
-    packages=find_packages(),
-    install_requires = requirements,
-)
+# Install kubectl
+gcloud components install kubectl
 ```
 
-## Step 5: Install the package in editable mode
+### 2. GCP Project Setup
 
+### 2. GCP Project Setup
 ```bash
-uv pip install -r requirements.txt
+# Set your project ID
+$PROJECT_ID="build-test-468516"  # Your actual project ID
+gcloud config set project $PROJECT_ID
+gcloud config set compute/region asia-south1
+gcloud config set compute/zone asia-south1-b
 ```
 
-# Local Development Commands
+## 🚀 **AUTOMATED DEPLOYMENT (GitHub Actions)**
+
+**✅ FULLY AUTOMATED - Just push to GitHub and everything deploys automatically!**
+
+### **One-Time Setup (Only do this once)**
+
+### **Step 1: Quick GCP Setup**
+```powershell
+# Install Google Cloud CLI (if not installed)
+choco install gcloudsdk
+
+# Login and set project
+gcloud auth login
+$PROJECT_ID="build-test-468516"
+gcloud config set project $PROJECT_ID
+gcloud config set compute/region asia-south1
+gcloud config set compute/zone asia-south1-b
+```
+
+### **Step 2: Enable APIs & Create Service Account**
+```bash
+# Enable all required APIs
+gcloud services enable compute.googleapis.com container.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com cloudbuild.googleapis.com servicenetworking.googleapis.com
+
+# Create service account with all permissions
+gcloud iam service-accounts create github-actions --description="Service account for GitHub Actions" --display-name="GitHub Actions"
+
+# Grant all necessary permissions
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/container.admin"
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/artifactregistry.admin"
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/secretmanager.admin"
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/iam.serviceAccountUser"
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/compute.admin"
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/editor"
+
+# Create service account key
+gcloud iam service-accounts keys create github-actions-key.json --iam-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com
+```
+
+### **Step 3: Create API Key Secrets**
+```bash
+# Create secrets with your actual API keys (replace with real values)
+echo -n "your-actual-groq-api-key" | gcloud secrets create GROQ_API_KEY --data-file=-
+echo -n "your-actual-hf-token" | gcloud secrets create HF_TOKEN --data-file=-
+echo -n "your-actual-google-api-key" | gcloud secrets create GOOGLE_API_KEY --data-file=-
+echo -n "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" | gcloud secrets create LANGCHAIN_API_KEY --data-file=-
+```
+
+### **Step 4: Setup GitHub Secret**
+1. Go to GitHub repo → **Settings** → **Secrets and variables** → **Actions**
+2. Click **New repository secret**
+3. Name: `GCP_SERVICE_ACCOUNT_KEY`
+4. Value: Copy **entire content** of `github-actions-key.json` file
+5. Click **Add secret**
+
+## 🎯 **DEPLOY EVERYTHING (Just Push to GitHub!)**
+
+### **That's it! Now just push to master branch:**
+```bash
+git add .
+git commit -m "Deploy to GKE with full infrastructure"
+git push origin master
+```
+
+**GitHub Actions will automatically:**
+1. ✅ **Plan Infrastructure** - Review Terraform changes
+2. ✅ **Deploy Infrastructure** - Create VPC, GKE cluster, service accounts
+3. ✅ **Build Docker Image** - Build and push to Artifact Registry  
+4. ✅ **Deploy to GKE** - Create Kubernetes secrets and deploy application
+5. ✅ **Get External IP** - Show you the URL to access your app
+
+### **Check Deployment Status:**
+- Go to GitHub repo → **Actions** tab
+- Watch the deployment progress in real-time
+- Get your application URL from the final step logs
+
+### **Access Your Application:**
+After deployment completes, check the Actions logs for:
+```
+Application deployed successfully!
+External IP: 34.XXX.XXX.XXX
+Access your application at: http://34.XXX.XXX.XXX
+```
+
+---
+
+# 🛠️ **MANUAL DEPLOYMENT (If you prefer step-by-step control)**
+
+<details>
+<summary>Click to expand manual deployment commands (not recommended - use GitHub Actions instead)</summary>
+
+### **Manual Setup Prerequisites**
+```powershell
+# Install Terraform if needed (GitHub Actions already has this)
+choco install terraform
+
+# Set up authentication for Terraform
+gcloud auth application-default login
+```
+
+### **Manual Terraform Commands**
+```bash
+# Navigate to terraform directory  
+cd terraform
+
+# Initialize Terraform
+terraform init
+
+# Plan deployment (review what will be created)
+terraform plan
+
+# Apply infrastructure (create everything)
+terraform apply
+```
+
+### **Manual Application Deployment**
+```bash
+# Get cluster credentials
+gcloud container clusters get-credentials document-portal-cluster --zone=asia-south1-b
+
+# Create Kubernetes secrets from GCP Secret Manager
+$GROQ_API_KEY = gcloud secrets versions access latest --secret="GROQ_API_KEY"
+$HF_TOKEN = gcloud secrets versions access latest --secret="HF_TOKEN" 
+$GOOGLE_API_KEY = gcloud secrets versions access latest --secret="GOOGLE_API_KEY"
+$LANGCHAIN_API_KEY = gcloud secrets versions access latest --secret="LANGCHAIN_API_KEY"
+
+kubectl create secret generic groq-api-key --from-literal=api-key="$GROQ_API_KEY"
+kubectl create secret generic hf-token --from-literal=token="$HF_TOKEN"
+kubectl create secret generic google-api-key --from-literal=api-key="$GOOGLE_API_KEY"
+kubectl create secret generic langchain-api-key --from-literal=api-key="$LANGCHAIN_API_KEY"
+
+# Build and push Docker image
+$IMAGE_URI = "asia-south1-docker.pkg.dev/$PROJECT_ID/document-portal/document-portal:latest"
+gcloud auth configure-docker asia-south1-docker.pkg.dev
+docker build -t $IMAGE_URI .
+docker push $IMAGE_URI
+
+# Update deployment YAML and deploy
+(Get-Content "k8s\deployment.yaml") -replace 'image: .*', "image: $IMAGE_URI" | Set-Content "k8s\deployment.yaml"
+kubectl apply -f k8s/deployment.yaml
+kubectl rollout status deployment/document-portal --timeout=600s
+```
+
+</details>
+
+---
+
+## 📊 **Infrastructure Comparison**
+```
+
+# 🛠️ **MANUAL DEPLOYMENT (If you prefer step-by-step control)**
+
+<details>
+<summary>Click to expand manual deployment steps</summary>
+
+## Manual Setup Commands
+
+### **Step 1: Install Prerequisites**
+```powershell
+# Install required tools (Windows)
+choco install gcloudsdk terraform
+
+# Or download manually:
+# Terraform: https://www.terraform.io/downloads.html
+# Google Cloud CLI: https://cloud.google.com/sdk/docs/install-sdk#windows
+
+# Initialize gcloud
+gcloud init
+gcloud auth login
+```
+
+### **Step 2: Configure GCP Project**
+```bash
+# Set your project
+$PROJECT_ID="build-test-468516"
+gcloud config set project $PROJECT_ID
+gcloud config set compute/region asia-south1
+gcloud config set compute/zone asia-south1-b
+```
+
+---
+
+## 📊 **Infrastructure Comparison**
+
+| Feature | Cloud Run | GKE (This Setup) |
+|---------|-----------|------------------|
+| **CPU** | Max 4 vCPUs | Up to 96 vCPUs per node |
+| **Memory** | Max 8GB | Up to 360GB per node |
+| **Cold Starts** | Yes (0-5 seconds) | No |
+| **Auto Scaling** | Basic | Advanced (HPA, VPA, Cluster Autoscaler) |
+| **Networking** | Managed | Full VPC control |
+| **Load Balancing** | Basic | Advanced (Global Load Balancer) |
+| **Cost** | Pay per request | Pay for provisioned resources |
+| **Control** | Limited | Full infrastructure control |
+
+## 🎯 **Performance Benefits**
+
+### **Machine Types Available:**
+- **e2-standard-4**: 4 vCPUs, 16GB RAM (default)
+- **e2-standard-8**: 8 vCPUs, 32GB RAM
+- **e2-highmem-16**: 16 vCPUs, 128GB RAM
+- **c2-standard-16**: 16 vCPUs, 64GB RAM (compute optimized)
+
+### **Auto-scaling Configuration:**
+- **Min nodes**: 1 (cost optimization)
+- **Max nodes**: 5 (can handle traffic spikes)
+- **Pod autoscaling**: Based on CPU/memory usage
+- **Cluster autoscaling**: Adds/removes nodes automatically
+
+## 📋 **Monitoring and Management**
+
+### **Check Deployment Status:**
+```bash
+# Get cluster info
+kubectl cluster-info
+
+# Check nodes
+kubectl get nodes -o wide
+
+# Check pods
+kubectl get pods -o wide
+
+# Check services and ingress
+kubectl get services
+kubectl get ingress
+
+# Get application logs
+kubectl logs -f deployment/document-portal
+
+# Check resource usage
+kubectl top nodes
+kubectl top pods
+```
+
+### **Scaling Commands:**
+```bash
+# Manual scaling
+kubectl scale deployment document-portal --replicas=5
+
+# Update node pool size
+gcloud container clusters resize document-portal-cluster --num-nodes=3 --zone=asia-south1-b
+
+# Update machine type (requires recreating node pool)
+gcloud container node-pools create high-performance-pool \
+  --cluster=document-portal-cluster \
+  --zone=asia-south1-b \
+  --machine-type=e2-standard-8 \
+  --num-nodes=2
+```
+
+---
+
+# 📦 **Alternative: Simple Cloud Run Setup**
+
+If you prefer the simple serverless approach (limited performance):
+
+## Local Development Commands
 ```bash
 # FastAPI development server
 uvicorn api.main:app --port 8080 --reload    
@@ -135,7 +409,9 @@ gcloud iam service-accounts keys create github-actions-key.json --iam-account=gi
 echo -n "your-actual-groq-api-key" | gcloud secrets create GROQ_API_KEY --data-file=-
 echo -n "your-actual-hf-token" | gcloud secrets create HF_TOKEN --data-file=-
 echo -n "your-actual-google-api-key" | gcloud secrets create GOOGLE_API_KEY --data-file=-
-echo -n "your-actual-langchain-api-key" | gcloud secrets create LANGCHAIN_API_KEY --data-file=-
+echo -n "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" | gcloud secrets create LANGCHAIN_API_KEY --data-file=-
+
+
 
 # If secrets already exist, update them with new values:
 # echo -n "your-actual-groq-api-key" | gcloud secrets versions add GROQ_API_KEY --data-file=-
@@ -279,7 +555,99 @@ gcloud run services update document-portal --region=us-central1 --memory=4Gi --c
 
 **⚠️ WARNING: These commands will permanently delete all GCP resources and cannot be undone!**
 
-Use these commands when you want to completely remove all GCP resources and clean up your project.
+# �️ **Cleanup Commands (Delete Everything)**
+
+**⚠️ WARNING: These commands will permanently delete all GCP resources!**
+
+## **Complete GKE Infrastructure Cleanup**
+
+### **Step 1: Delete Kubernetes Resources**
+```bash
+# Delete the application deployment
+kubectl delete -f k8s/deployment.yaml
+
+# Delete Kubernetes secrets
+kubectl delete secret groq-api-key hf-token google-api-key langchain-api-key
+```
+
+### **Step 2: Destroy Infrastructure with Terraform**
+```bash
+# Navigate to terraform directory
+cd terraform
+
+# Destroy all infrastructure
+terraform destroy
+
+# Clean up Terraform files
+Remove-Item -Path ".terraform*" -Recurse -Force
+Remove-Item -Path "terraform.tfstate*" -Force
+```
+
+### **Step 3: Delete Docker Images**
+```bash
+# Delete all Docker images in the repository
+gcloud artifacts docker images list asia-south1-docker.pkg.dev/build-test-468516/document-portal --format="value(IMAGE_URI)" | ForEach-Object { gcloud artifacts docker images delete $_ --quiet }
+
+# Delete the entire Artifact Registry repository
+gcloud artifacts repositories delete document-portal --location=asia-south1 --quiet
+```
+
+### **Step 4: Delete GCP Secrets**
+```bash
+# Delete all secrets
+gcloud secrets delete GROQ_API_KEY --quiet
+gcloud secrets delete HF_TOKEN --quiet  
+gcloud secrets delete GOOGLE_API_KEY --quiet
+gcloud secrets delete LANGCHAIN_API_KEY --quiet
+```
+
+### **Step 5: Remove Service Account and Permissions**
+```bash
+# Remove IAM policy bindings
+$PROJECT_ID = "build-test-468516"
+
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/container.admin" --quiet
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/artifactregistry.admin" --quiet
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/secretmanager.admin" --quiet
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/iam.serviceAccountUser" --quiet
+gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/compute.admin" --quiet
+
+# Delete service account keys
+gcloud iam service-accounts keys list --iam-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com --format="value(name)" | ForEach-Object { gcloud iam service-accounts keys delete $_ --iam-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com --quiet }
+
+# Delete service account
+gcloud iam service-accounts delete github-actions@$PROJECT_ID.iam.gserviceaccount.com --quiet
+```
+
+### **Step 6: Delete Local Files**
+```bash
+# Delete local service account key file
+Remove-Item -Path "github-actions-key.json" -Force -ErrorAction SilentlyContinue
+```
+
+### **Step 7: Verification Commands**
+```bash
+# Verify everything is deleted
+gcloud container clusters list --filter="name:document-portal*"
+gcloud compute networks list --filter="name:document-portal*"
+gcloud artifacts repositories list --location=asia-south1
+gcloud secrets list
+gcloud iam service-accounts list --filter="email:github-actions@*"
+```
+
+### **Step 8: GitHub Cleanup (Manual)**
+1. Go to GitHub repo → Settings → Secrets and variables → Actions
+2. Delete secret: `GCP_SERVICE_ACCOUNT_KEY`
+
+## **Quick One-Line Cleanup (Nuclear Option)**
+```bash
+# ⚠️ DANGER: This will delete EVERYTHING at once
+$PROJECT_ID="build-test-468516"; kubectl delete -f k8s/deployment.yaml; kubectl delete secret groq-api-key hf-token google-api-key langchain-api-key; cd terraform; terraform destroy -auto-approve; cd ..; gcloud artifacts repositories delete document-portal --location=asia-south1 --quiet; gcloud secrets delete GROQ_API_KEY HF_TOKEN GOOGLE_API_KEY LANGCHAIN_API_KEY --quiet; gcloud iam service-accounts delete github-actions@$PROJECT_ID.iam.gserviceaccount.com --quiet; Remove-Item -Path "github-actions-key.json", "terraform\.terraform*", "terraform\terraform.tfstate*" -Recurse -Force -ErrorAction SilentlyContinue
+```
+
+## ☁️ **Cloud Run Cleanup (Simple Setup)**
+
+Use this if you're using the simple Cloud Run setup:
 
 ## Complete Cleanup Script
 

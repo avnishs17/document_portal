@@ -1,0 +1,162 @@
+name: Deploy to GKE with Full Infrastructure Control
+
+on:
+  push:
+    branches:
+      - "master"
+
+env:
+  GCP_PROJECT_ID: build-test-468516
+  GCP_REGION: asia-south1
+  GCP_ZONE: asia-south1-b
+  GKE_CLUSTER: document-portal-cluster
+  REPOSITORY_NAME: document-portal
+  IMAGE_NAME: document-portal
+  DEPLOYMENT_NAME: document-portal
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.5.0
+
+    - name: Terraform Init
+      run: |
+        cd terraform
+        terraform init
+
+    - name: Terraform Plan
+      run: |
+        cd terraform
+        terraform plan -var="project_id=${{ env.GCP_PROJECT_ID }}" -var="region=${{ env.GCP_REGION }}" -var="zone=${{ env.GCP_ZONE }}"
+
+  deploy-infrastructure:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    environment: production
+    needs: terraform-plan
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.5.0
+
+    - name: Deploy Infrastructure with Terraform
+      run: |
+        cd terraform
+        terraform init
+        terraform apply -auto-approve -var="project_id=${{ env.GCP_PROJECT_ID }}" -var="region=${{ env.GCP_REGION }}" -var="zone=${{ env.GCP_ZONE }}"
+
+    - name: Get GKE Credentials
+      run: |
+        gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --zone=${{ env.GCP_ZONE }} --project=${{ env.GCP_PROJECT_ID }}
+
+  build-and-deploy:
+    name: Build and Deploy Application
+    runs-on: ubuntu-latest
+    environment: production
+    needs: deploy-infrastructure
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Configure Docker to use gcloud
+      run: |
+        gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
+
+    - name: Build and push Docker image
+      id: build
+      run: |
+        IMAGE_URI=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        docker build -t $IMAGE_URI .
+        docker push $IMAGE_URI
+        echo "image_uri=$IMAGE_URI" >> $GITHUB_OUTPUT
+
+    - name: Get GKE Credentials
+      run: |
+        gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --zone=${{ env.GCP_ZONE }} --project=${{ env.GCP_PROJECT_ID }}
+
+    - name: Create Kubernetes Secrets from GCP Secret Manager
+      run: |
+        # Get secrets from Secret Manager and create Kubernetes secrets
+        GROQ_API_KEY=$(gcloud secrets versions access latest --secret="GROQ_API_KEY" --project=${{ env.GCP_PROJECT_ID }})
+        HF_TOKEN=$(gcloud secrets versions access latest --secret="HF_TOKEN" --project=${{ env.GCP_PROJECT_ID }})
+        GOOGLE_API_KEY=$(gcloud secrets versions access latest --secret="GOOGLE_API_KEY" --project=${{ env.GCP_PROJECT_ID }})
+        LANGCHAIN_API_KEY=$(gcloud secrets versions access latest --secret="LANGCHAIN_API_KEY" --project=${{ env.GCP_PROJECT_ID }})
+        
+        # Create or update Kubernetes secrets
+        kubectl create secret generic groq-api-key --from-literal=api-key="$GROQ_API_KEY" --dry-run=client -o yaml | kubectl apply -f -
+        kubectl create secret generic hf-token --from-literal=token="$HF_TOKEN" --dry-run=client -o yaml | kubectl apply -f -
+        kubectl create secret generic google-api-key --from-literal=api-key="$GOOGLE_API_KEY" --dry-run=client -o yaml | kubectl apply -f -
+        kubectl create secret generic langchain-api-key --from-literal=api-key="$LANGCHAIN_API_KEY" --dry-run=client -o yaml | kubectl apply -f -
+
+    - name: Update deployment image
+      run: |
+        # Update the deployment YAML with the new image
+        sed -i "s|image: .*|image: ${{ steps.build.outputs.image_uri }}|g" k8s/deployment.yaml
+
+    - name: Deploy to GKE
+      run: |
+        # Apply Kubernetes manifests
+        kubectl apply -f k8s/deployment.yaml
+        
+        # Wait for rollout to complete
+        kubectl rollout status deployment/${{ env.DEPLOYMENT_NAME }} --timeout=600s
+        
+        # Get service information
+        kubectl get services
+        kubectl get ingress
+
+    - name: Get Load Balancer IP
+      run: |
+        echo "Waiting for Load Balancer IP..."
+        sleep 60
+        EXTERNAL_IP=$(kubectl get ingress document-portal-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        if [ -z "$EXTERNAL_IP" ]; then
+          EXTERNAL_IP="Pending"
+        fi
+        echo "Application deployed successfully!"
+        echo "External IP: $EXTERNAL_IP"
+        echo "Access your application at: http://$EXTERNAL_IP"
+        
+        # Also show the static IP that was allocated
+        STATIC_IP=$(gcloud compute addresses describe document-portal-ip --global --format="value(address)")
+        echo "Static IP allocated: $STATIC_IP"

@@ -1,0 +1,150 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: document-portal
+  namespace: default
+  labels:
+    app: document-portal
+spec:
+  replicas: 2  # High availability
+  selector:
+    matchLabels:
+      app: document-portal
+  template:
+    metadata:
+      labels:
+        app: document-portal
+    spec:
+      serviceAccountName: document-portal-ksa  # Workload Identity
+      containers:
+      - name: document-portal
+        image: asia-south1-docker.pkg.dev/build-test-468516/document-portal/document-portal:latest
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        
+        # Environment variables from secrets
+        env:
+        - name: GROQ_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: groq-api-key
+              key: api-key
+        - name: HF_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: hf-token
+              key: token
+        - name: GOOGLE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: google-api-key
+              key: api-key
+        - name: LANGCHAIN_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: langchain-api-key
+              key: api-key
+        - name: LANGCHAIN_PROJECT
+          value: "DOCUMENT PORTAL"
+        
+        # Resource requests and limits (much more than Cloud Run allows)
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "8Gi"
+            cpu: "4000m"
+        
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        
+        # Security context
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: document-portal-service
+  namespace: default
+  labels:
+    app: document-portal
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: document-portal
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: document-portal-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: "document-portal-ip"
+    # networking.gke.io/managed-certificates: "document-portal-ssl-cert"  # Uncomment when you have a custom domain
+    kubernetes.io/ingress.class: "gce"
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"  # Uncomment when using HTTPS with custom domain
+  labels:
+    app: document-portal
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /*
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: document-portal-service
+            port:
+              number: 80
+
+# Uncomment this section when you have a custom domain and want HTTPS
+# ---
+# apiVersion: networking.gke.io/v1
+# kind: ManagedCertificate
+# metadata:
+#   name: document-portal-ssl-cert
+#   namespace: default
+# spec:
+#   domains:
+#     - your-domain.com  # Replace with your actual domain
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: document-portal-ksa
+  namespace: default
+  annotations:
+    iam.gke.io/gcp-service-account: document-portal-gke-sa@build-test-468516.iam.gserviceaccount.com
