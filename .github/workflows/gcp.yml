@@ -7,7 +7,8 @@ on:
 
 env:
   GCP_PROJECT_ID: build-test-468516  # Your GCP project ID
-  GCP_REGION: us-central1
+  GCP_REGION: asia-south1
+  GCP_ZONE: asia-south1-b
   SERVICE_NAME: document-portal
   REPOSITORY_NAME: document-portal
   IMAGE_NAME: document-portal

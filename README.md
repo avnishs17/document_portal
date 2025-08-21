@@ -127,10 +127,16 @@ gcloud iam service-accounts keys create github-actions-key.json --iam-account=gi
 ### Step 5: Create Secrets in Secret Manager
 ```bash
 # Create secrets for your API keys (replace with your actual values)
-echo -n "your-groq-api-key" | gcloud secrets create GROQ_API_KEY --data-file=-
-echo -n "your-hf-token" | gcloud secrets create HF_TOKEN --data-file=-
-echo -n "your-google-api-key" | gcloud secrets create GOOGLE_API_KEY --data-file=-
-echo -n "your-langchain-api-key" | gcloud secrets create LANGCHAIN_API_KEY --data-file=-
+echo -n "your-actual-groq-api-key" | gcloud secrets create GROQ_API_KEY --data-file=-
+echo -n "your-actual-hf-token" | gcloud secrets create HF_TOKEN --data-file=-
+echo -n "your-actual-google-api-key" | gcloud secrets create GOOGLE_API_KEY --data-file=-
+echo -n "your-actual-langchain-api-key" | gcloud secrets create LANGCHAIN_API_KEY --data-file=-
+
+# If secrets already exist, update them with new values:
+# echo -n "your-actual-groq-api-key" | gcloud secrets versions add GROQ_API_KEY --data-file=-
+# echo -n "your-actual-hf-token" | gcloud secrets versions add HF_TOKEN --data-file=-
+# echo -n "your-actual-google-api-key" | gcloud secrets versions add GOOGLE_API_KEY --data-file=-
+# echo -n "your-actual-langchain-api-key" | gcloud secrets versions add LANGCHAIN_API_KEY --data-file=-
 ```
 
 ### Step 6: Update GitHub Repository
