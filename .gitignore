@@ -10,6 +10,6 @@ archive/
 notebook/
 data/
 github-actions-key.json
-.github\workflows\aws.yml
-.github\workflows\template.yml
-.github\workflows\task_definition.json
+.github/workflows/aws.yml
+.github/workflows/template.yml
+.github/workflows/task_definition.json
