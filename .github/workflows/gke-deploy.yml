@@ -90,6 +90,23 @@ jobs:
           terraform import google_compute_network.document_portal_vpc projects/${{ env.GCP_PROJECT_ID }}/global/networks/document-portal-vpc || true
         fi
         
+        # Import subnet if it exists
+        if gcloud compute networks subnets describe document-portal-subnet --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
+          echo "Importing existing subnet..."
+          terraform import google_compute_subnetwork.document_portal_subnet projects/${{ env.GCP_PROJECT_ID }}/regions/${{ env.GCP_REGION }}/subnetworks/document-portal-subnet || true
+        fi
+        
+        # Import firewall rules if they exist
+        if gcloud compute firewall-rules describe document-portal-allow-internal --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
+          echo "Importing existing internal firewall rule..."
+          terraform import google_compute_firewall.allow_internal projects/${{ env.GCP_PROJECT_ID }}/global/firewalls/document-portal-allow-internal || true
+        fi
+        
+        if gcloud compute firewall-rules describe document-portal-allow-http-https --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
+          echo "Importing existing HTTP/HTTPS firewall rule..."
+          terraform import google_compute_firewall.allow_http_https projects/${{ env.GCP_PROJECT_ID }}/global/firewalls/document-portal-allow-http-https || true
+        fi
+        
         # Import global IP if it exists
         if gcloud compute addresses describe document-portal-ip --global --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
           echo "Importing existing global IP..."
