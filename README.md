@@ -257,6 +257,7 @@ gcloud iam service-accounts keys create github-actions-key.json --iam-account=gi
 # Create secrets with your actual API keys (replace with real values)
 echo -n "your-actual-groq-api-key" | gcloud secrets create GROQ_API_KEY --data-file=-
 echo -n "your-actual-google-api-key" | gcloud secrets create GOOGLE_API_KEY --data-file=-
+echo -n "your-actual-langchain-api-key" | gcloud secrets create LANGCHAIN_API_KEY --data-file=-
 ```
 
 ### **Step 3: Setup GitHub Secret**
