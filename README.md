@@ -410,7 +410,23 @@ gcloud artifacts docker images list asia-south1-docker.pkg.dev/build-test-468516
 gcloud artifacts repositories delete document-portal --location=asia-south1 --quiet
 ```
 
-### **Step 4: Delete GCP Secrets**
+### **Step 4: Delete VPC and Networking Resources**
+```bash
+# Delete firewall rules
+gcloud compute firewall-rules delete document-portal-allow-internal
+gcloud compute firewall-rules delete document-portal-allow-http-https
+
+# Delete global IP address
+gcloud compute addresses delete document-portal-ip --global
+
+# Delete subnet
+gcloud compute networks subnets delete document-portal-subnet --region=asia-south1
+
+# Delete VPC network (must be last after all dependent resources)
+gcloud compute networks delete document-portal-vpc
+```
+
+### **Step 5: Delete GCP Secrets**
 ```bash
 # Delete all secrets
 gcloud secrets delete GROQ_API_KEY --quiet
@@ -418,7 +434,7 @@ gcloud secrets delete GOOGLE_API_KEY --quiet
 gcloud secrets delete LANGCHAIN_API_KEY --quiet
 ```
 
-### **Step 5: Remove Service Account and Permissions**
+### **Step 6: Remove Service Account and Permissions**
 ```bash
 # Remove IAM policy bindings
 $PROJECT_ID = "build-test-468516"
@@ -439,7 +455,7 @@ gcloud iam service-accounts keys list --iam-account=github-actions@$PROJECT_ID.i
 gcloud iam service-accounts delete github-actions@$PROJECT_ID.iam.gserviceaccount.com --quiet
 ```
 
-### **Step 6: Delete Local Files**
+### **Step 7: Delete Local Files**
 ```bash
 # Delete local service account key file
 Remove-Item -Path "github-actions-key.json" -Force -ErrorAction SilentlyContinue
