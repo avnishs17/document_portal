@@ -74,6 +74,28 @@ jobs:
       run: |
         cd terraform
         terraform init
+        
+        # Try to import existing resources to avoid conflicts
+        echo "Checking for existing resources and importing if they exist..."
+        
+        # Import service account if it exists
+        if gcloud iam service-accounts describe document-portal-gke-sa@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com >/dev/null 2>&1; then
+          echo "Importing existing service account..."
+          terraform import google_service_account.gke_service_account projects/${{ env.GCP_PROJECT_ID }}/serviceAccounts/document-portal-gke-sa@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com || true
+        fi
+        
+        # Import VPC if it exists  
+        if gcloud compute networks describe document-portal-vpc --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
+          echo "Importing existing VPC..."
+          terraform import google_compute_network.document_portal_vpc projects/${{ env.GCP_PROJECT_ID }}/global/networks/document-portal-vpc || true
+        fi
+        
+        # Import global IP if it exists
+        if gcloud compute addresses describe document-portal-ip --global --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
+          echo "Importing existing global IP..."
+          terraform import google_compute_global_address.document_portal_ip projects/${{ env.GCP_PROJECT_ID }}/global/addresses/document-portal-ip || true
+        fi
+        
         terraform apply -auto-approve -var="project_id=${{ env.GCP_PROJECT_ID }}" -var="region=${{ env.GCP_REGION }}" -var="zone=${{ env.GCP_ZONE }}"
 
     - name: Get GKE Credentials
