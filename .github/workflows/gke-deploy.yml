@@ -78,52 +78,76 @@ jobs:
         # Try to import existing resources to avoid conflicts
         echo "Checking for existing resources and importing if they exist..."
         
-        # Import service account if it exists
+        # Check and import service account
         if gcloud iam service-accounts describe document-portal-gke-sa@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com >/dev/null 2>&1; then
-          echo "Importing existing service account..."
+          echo "✅ Found existing service account - importing..."
           terraform import google_service_account.gke_service_account projects/${{ env.GCP_PROJECT_ID }}/serviceAccounts/document-portal-gke-sa@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com || true
+        else
+          echo "❌ Service account not found - will be created"
         fi
         
-        # Import VPC if it exists  
+        # Check and import VPC
         if gcloud compute networks describe document-portal-vpc --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
-          echo "Importing existing VPC..."
+          echo "✅ Found existing VPC - importing..."
           terraform import google_compute_network.document_portal_vpc projects/${{ env.GCP_PROJECT_ID }}/global/networks/document-portal-vpc || true
+        else
+          echo "❌ VPC not found - will be created"
         fi
         
-        # Import subnet if it exists
+        # Check and import subnet
         if gcloud compute networks subnets describe document-portal-subnet --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
-          echo "Importing existing subnet..."
+          echo "✅ Found existing subnet - importing..."
           terraform import google_compute_subnetwork.document_portal_subnet projects/${{ env.GCP_PROJECT_ID }}/regions/${{ env.GCP_REGION }}/subnetworks/document-portal-subnet || true
+        else
+          echo "❌ Subnet not found - will be created"
         fi
         
-        # Import firewall rules if they exist
+        # Check and import internal firewall rule
         if gcloud compute firewall-rules describe document-portal-allow-internal --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
-          echo "Importing existing internal firewall rule..."
+          echo "✅ Found existing internal firewall rule - importing..."
           terraform import google_compute_firewall.allow_internal projects/${{ env.GCP_PROJECT_ID }}/global/firewalls/document-portal-allow-internal || true
+        else
+          echo "❌ Internal firewall rule not found - will be created"
         fi
         
+        # Check and import HTTP/HTTPS firewall rule
         if gcloud compute firewall-rules describe document-portal-allow-http-https --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
-          echo "Importing existing HTTP/HTTPS firewall rule..."
+          echo "✅ Found existing HTTP/HTTPS firewall rule - importing..."
           terraform import google_compute_firewall.allow_http_https projects/${{ env.GCP_PROJECT_ID }}/global/firewalls/document-portal-allow-http-https || true
+        else
+          echo "❌ HTTP/HTTPS firewall rule not found - will be created"
         fi
         
-        # Import global IP if it exists
+        # Check and import global IP
         if gcloud compute addresses describe document-portal-ip --global --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
-          echo "Importing existing global IP..."
+          echo "✅ Found existing global IP - importing..."
           terraform import google_compute_global_address.document_portal_ip projects/${{ env.GCP_PROJECT_ID }}/global/addresses/document-portal-ip || true
+        else
+          echo "❌ Global IP not found - will be created"
         fi
         
-        # Import GKE cluster if it exists
+        # Check and import GKE cluster
         if gcloud container clusters describe ${{ env.GKE_CLUSTER }} --zone=${{ env.GCP_ZONE }} --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
-          echo "Importing existing GKE cluster..."
+          echo "✅ Found existing GKE cluster - importing..."
           terraform import google_container_cluster.document_portal_cluster projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_ZONE }}/clusters/${{ env.GKE_CLUSTER }} || true
+          
+          # Only check for node pool if cluster exists
+          if gcloud container node-pools describe default-pool --cluster=${{ env.GKE_CLUSTER }} --zone=${{ env.GCP_ZONE }} --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
+            echo "✅ Found existing node pool - importing..."
+            terraform import google_container_node_pool.document_portal_nodes projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_ZONE }}/clusters/${{ env.GKE_CLUSTER }}/nodePools/default-pool || true
+          else
+            echo "❌ Node pool not found - will be created"
+          fi
+        else
+          echo "❌ GKE cluster not found - will be created (this may take 5-10 minutes)"
         fi
         
-        # Import GKE node pool if it exists
-        if gcloud container node-pools describe default-pool --cluster=${{ env.GKE_CLUSTER }} --zone=${{ env.GCP_ZONE }} --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
-          echo "Importing existing GKE node pool..."
-          terraform import google_container_node_pool.document_portal_nodes projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_ZONE }}/clusters/${{ env.GKE_CLUSTER }}/nodePools/default-pool || true
-        fi
+        echo ""
+        echo "=== INFRASTRUCTURE ANALYSIS COMPLETE ==="
+        echo "✅ = Resource exists and imported"
+        echo "❌ = Resource will be created"
+        echo "========================================="
+        echo ""
         
         # Create a new plan after imports (if any were done)
         echo "Creating execution plan..."
