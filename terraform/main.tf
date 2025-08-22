@@ -40,7 +40,7 @@ variable "cluster_name" {
   default     = "document-portal-cluster"
 }
 
-# Enable required APIs
+# Enable required APIs for GKE deployment
 resource "google_project_service" "required_apis" {
   for_each = toset([
     "compute.googleapis.com",
