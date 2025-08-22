@@ -21,7 +21,7 @@ spec:
         emptyDir: {}  # Temporary storage for the pod
       containers:
       - name: document-portal
-        image: us-central1-docker.pkg.dev/build-test-468516/document-portal/document-portal:latest
+        image: us-central1-docker.pkg.dev/your-gcp-project-id-here/document-portal/document-portal:latest
         ports:
         - containerPort: 8080
           protocol: TCP
@@ -186,4 +186,4 @@ metadata:
   name: document-portal-ksa
   namespace: default
   annotations:
-    iam.gke.io/gcp-service-account: document-portal-gke-sa@build-test-468516.iam.gserviceaccount.com
+    iam.gke.io/gcp-service-account: document-portal-gke-sa@your-gcp-project-id-here.iam.gserviceaccount.com

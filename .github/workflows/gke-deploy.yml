@@ -6,7 +6,9 @@ on:
       - "master"
 
 env:
-  GCP_PROJECT_ID: build-test-468516
+  # ⚠️ IMPORTANT: Replace these dummy values with your actual GCP project details
+  # These are placeholder values - you MUST update them before deployment
+  GCP_PROJECT_ID: your-gcp-project-id-here
   GCP_REGION: us-central1
   GCP_ZONE: us-central1-b
   GKE_CLUSTER: document-portal-cluster

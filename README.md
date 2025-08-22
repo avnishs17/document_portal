@@ -163,6 +163,54 @@ langsmith:
 
 # 🏗️ **Production Deployment (GKE)**
 
+## ⚠️ **IMPORTANT: Configuration Required Before Deployment**
+
+**Before you can deploy this application, you MUST update the following files with your actual GCP project details:**
+
+### **Files to Update:**
+
+1. **`.github/workflows/gke-deploy.yml`** (Line 8):
+   ```yaml
+   env:
+     # ⚠️ IMPORTANT: Replace these dummy values with your actual GCP project details
+     # These are placeholder values - you MUST update them before deployment
+     GCP_PROJECT_ID: your-gcp-project-id-here  # ← Replace with your actual project ID
+     GCP_REGION: us-central1
+     GCP_ZONE: us-central1-b
+   ```
+
+2. **`terraform/main.tf`** (Line 25):
+   ```hcl
+   variable "project_id" {
+     description = "The GCP project ID"
+     type        = string
+     # ⚠️ IMPORTANT: Replace this dummy value with your actual GCP project ID
+     # This is a placeholder value - you MUST update it before deployment
+     default     = "your-gcp-project-id-here"  # ← Replace with your actual project ID
+   }
+   ```
+
+3. **`k8s/deployment.yaml`** (Lines 23 & 188):
+   ```yaml
+   # Line 23: Docker image reference
+   image: us-central1-docker.pkg.dev/your-gcp-project-id-here/document-portal/document-portal:latest
+   
+   # Line 188: Service account annotation
+   iam.gke.io/gcp-service-account: document-portal-gke-sa@your-gcp-project-id-here.iam.gserviceaccount.com
+   ```
+
+### **What You Need:**
+- **GCP Project ID**: Your Google Cloud Platform project ID (e.g., `my-awesome-project-123`)
+- **GCP Region**: The region where you want to deploy (default: `us-central1`)
+- **GCP Zone**: The zone within the region (default: `us-central1-b`)
+
+### **How to Find Your GCP Project ID:**
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Look at the project selector at the top of the page
+3. Your project ID is displayed there (e.g., `my-awesome-project-123`)
+
+---
+
 ## 🏗️ **Production-Grade Infrastructure**
 
 This setup provides **AWS ECS equivalent infrastructure** with complete control over networking, compute, and scaling on Google Cloud Platform.
@@ -399,8 +447,8 @@ gcloud secrets delete LANGCHAIN_API_KEY --quiet
 ### **Step 6: Delete Service Accounts**
 ```bash
 # Delete service accounts
-gcloud iam service-accounts delete document-portal-gke-sa@your-gcp-project-id.iam.gserviceaccount.com --quiet
-gcloud iam service-accounts delete github-actions@your-gcp-project-id.iam.gserviceaccount.com --quiet
+gcloud iam service-accounts delete document-portal-gke-sa@your-gcp-project-id-here.iam.gserviceaccount.com --quiet
+gcloud iam service-accounts delete github-actions@your-gcp-project-id-here.iam.gserviceaccount.com --quiet
 ```
 
 ### **Step 7: Verification Commands**
@@ -420,7 +468,8 @@ gcloud iam service-accounts list --filter="email:document-portal*"
 ## **Quick One-Line Cleanup (Nuclear Option)**
 ```bash
 # ⚠️ DANGER: This will delete EVERYTHING at once
-kubectl delete -f k8s/deployment.yaml; kubectl delete secret groq-api-key google-api-key langchain-api-key; gcloud container clusters delete document-portal-cluster --zone=us-central1-b --quiet; gcloud artifacts repositories delete document-portal --location=us-central1 --quiet; gcloud compute firewall-rules delete document-portal-allow-internal document-portal-allow-http-https --quiet; gcloud compute addresses delete document-portal-ip --global --quiet; gcloud compute networks subnets delete document-portal-subnet --region=us-central1 --quiet; gcloud compute networks delete document-portal-vpc --quiet; gcloud secrets delete GROQ_API_KEY GOOGLE_API_KEY LANGCHAIN_API_KEY --quiet; gcloud iam service-accounts delete document-portal-gke-sa@your-gcp-project-id.iam.gserviceaccount.com github-actions@your-gcp-project-id.iam.gserviceaccount.com --quiet
+# ⚠️ IMPORTANT: Replace 'your-gcp-project-id-here' with your actual project ID before running
+kubectl delete -f k8s/deployment.yaml; kubectl delete secret groq-api-key google-api-key langchain-api-key; gcloud container clusters delete document-portal-cluster --zone=us-central1-b --quiet; gcloud artifacts repositories delete document-portal --location=us-central1 --quiet; gcloud compute firewall-rules delete document-portal-allow-internal document-portal-allow-http-https --quiet; gcloud compute addresses delete document-portal-ip --global --quiet; gcloud compute networks subnets delete document-portal-subnet --region=us-central1 --quiet; gcloud compute networks delete document-portal-vpc --quiet; gcloud secrets delete GROQ_API_KEY GOOGLE_API_KEY LANGCHAIN_API_KEY --quiet; gcloud iam service-accounts delete document-portal-gke-sa@your-gcp-project-id-here.iam.gserviceaccount.com github-actions@your-gcp-project-id-here.iam.gserviceaccount.com --quiet
 ```
 
 ---

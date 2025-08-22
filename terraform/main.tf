@@ -19,7 +19,9 @@ provider "google" {
 variable "project_id" {
   description = "The GCP project ID"
   type        = string
-  default     = "build-test-468516"
+  # ⚠️ IMPORTANT: Replace this dummy value with your actual GCP project ID
+  # This is a placeholder value - you MUST update it before deployment
+  default     = "your-gcp-project-id-here"
 }
 
 variable "region" {
