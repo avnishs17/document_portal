@@ -8,11 +8,11 @@
 - **Single document analysis** - Deep analysis of individual documents  
 - **Document comparison** - Compare and analyze differences between documents
 - **AI-powered insights** - Powered by GROQ, Google AI, and LangChain
-- **Streamlit UI** - User-friendly web interface for document interaction
+- **Built-in HTML UI** - User-friendly web interface for document interaction
 
 ### **🔧 Tech Stack:**
 - **Backend**: FastAPI (Python)
-- **Frontend**: Streamlit
+- **Frontend**: HTML (built into FastAPI)
 - **AI/ML**: GROQ, Google AI, HuggingFace, LangChain
 - **Infrastructure**: Google Kubernetes Engine (GKE)
 - **Containerization**: Docker
@@ -69,7 +69,6 @@ Create a `.env` file in the root directory:
 GROQ_API_KEY=your-groq-api-key
 GOOGLE_API_KEY=your-google-ai-api-key
 
-# Optional: Database and other configs
 # Add other environment variables as needed
 ```
 
@@ -84,21 +83,21 @@ uvicorn api.main:app --port 8080 --reload
 # API docs at: http://localhost:8080/docs
 ```
 
-### **Option 2: Streamlit UI**
+### **Option 2: FastAPI with Built-in UI**
 ```bash
-# Run Streamlit frontend
-streamlit run streamlit_ui.py --server.port 8501
-
-# Access at: http://localhost:8501
-```
-
-### **Option 3: Both Services (Development)**
-```bash
-# Terminal 1: Run FastAPI backend
+# Run FastAPI with built-in HTML interface
 uvicorn api.main:app --port 8080 --reload
 
-# Terminal 2: Run Streamlit frontend  
-streamlit run streamlit_ui.py --server.port 8501
+# Access at: http://localhost:8080
+# The application includes a built-in HTML interface for document interaction
+```
+
+### **Option 3: Production Mode**
+```bash
+# Run FastAPI in production mode
+uvicorn api.main:app --port 8080 --workers 2
+
+# Access at: http://localhost:8080
 ```
 
 ## **🧪 Testing Locally**
@@ -107,7 +106,7 @@ streamlit run streamlit_ui.py --server.port 8501
 curl http://localhost:8080/health
 
 # Test with sample document
-# Upload a PDF file through the Streamlit UI at http://localhost:8501
+# Upload a PDF file through the built-in HTML interface at http://localhost:8080
 ```
 
 ## **📊 LangSmith Tracking (Optional)**
@@ -154,11 +153,10 @@ langsmith:
    .venv\Scripts\activate  # Windows
    source .venv/bin/activate  # Linux/Mac
    
-   # Run both services
-   uvicorn api.main:app --port 8080 --reload  # Terminal 1
-   streamlit run streamlit_ui.py --server.port 8501  # Terminal 2
+   # Run FastAPI application
+   uvicorn api.main:app --port 8080 --reload
    ```
-3. **Test changes**: Use http://localhost:8501 to test your application
+3. **Test changes**: Use http://localhost:8080 to test your application
 4. **Deploy**: Push to GitHub → Automatic deployment to GKE
 
 ---
@@ -220,7 +218,7 @@ gcloud auth login
 ### **2. Configure GCP Project**
 ```bash
 # Set your project ID
-$PROJECT_ID="build-test-468516"  # Your actual project ID
+$PROJECT_ID="your-gcp-project-id"  # Replace with your actual project ID
 gcloud config set project $PROJECT_ID
 gcloud config set compute/region us-central1
 gcloud config set compute/zone us-central1-b
@@ -299,39 +297,9 @@ git push origin master
 After deployment completes, check the Actions logs for:
 ```
 Application deployed successfully!
-External IP: 34.XXX.XXX.XXX
-Access your application at: http://34.XXX.XXX.XXX
+External IP: XXX.XXX.XXX.XXX
+Access your application at: http://XXX.XXX.XXX.XXX
 ```
-
----
-
-# 📊 **Infrastructure Comparison**
-
-| Feature | Cloud Run | GKE (This Setup) |
-|---------|-----------|------------------|
-| **CPU** | Max 4 vCPUs | 2 vCPUs (optimized for workload) |
-| **Memory** | Max 8GB | 8GB (optimized for workload) |
-| **Cold Starts** | Yes (0-5 seconds) | No |
-| **Auto Scaling** | Basic | Advanced (HPA, VPA, Cluster Autoscaler) |
-| **Networking** | Managed | Full VPC control |
-| **Load Balancing** | Basic | Advanced (Global Load Balancer) |
-| **Cost** | Pay per request | Pay for provisioned resources |
-| **Control** | Limited | Full infrastructure control |
-
-## 🎯 **Performance Benefits**
-
-### **Machine Types Available:**
-- **e2-standard-2**: 2 vCPUs, 8GB RAM (default - optimized for this workload)
-- **e2-standard-4**: 4 vCPUs, 16GB RAM
-- **e2-standard-8**: 8 vCPUs, 32GB RAM  
-- **e2-highmem-16**: 16 vCPUs, 128GB RAM
-- **c2-standard-16**: 16 vCPUs, 64GB RAM (compute optimized)
-
-### **Auto-scaling Configuration:**
-- **Min nodes**: 1 (cost optimization)
-- **Max nodes**: 5 (can handle traffic spikes)
-- **Pod autoscaling**: Based on CPU/memory usage
-- **Cluster autoscaling**: Adds/removes nodes automatically
 
 ---
 
@@ -389,80 +357,50 @@ gcloud container clusters resize document-portal-cluster --num-nodes=3 --zone=us
 kubectl delete -f k8s/deployment.yaml
 
 # Delete Kubernetes secrets
-kubectl delete secret groq-api-key google-api-key
+kubectl delete secret groq-api-key google-api-key langchain-api-key
 ```
 
-### **Step 2: Destroy Infrastructure with Terraform**
+### **Step 2: Delete GKE Cluster**
 ```bash
-# Navigate to terraform directory
-cd terraform
-
-# Destroy all infrastructure
-terraform destroy
-
-# Clean up Terraform files
-Remove-Item -Path ".terraform*" -Recurse -Force
-Remove-Item -Path "terraform.tfstate*" -Force
+# Delete the GKE cluster
+gcloud container clusters delete document-portal-cluster --zone=us-central1-b --quiet
 ```
 
-### **Step 3: Delete Docker Images**
+### **Step 3: Delete Artifact Registry**
 ```bash
-# Delete all Docker images in the repository
-gcloud artifacts docker images list us-central1-docker.pkg.dev/build-test-468516/document-portal --format="value(IMAGE_URI)" | ForEach-Object { gcloud artifacts docker images delete $_ }
-
 # Delete the entire Artifact Registry repository
-gcloud artifacts repositories delete document-portal --location=us-central1
+gcloud artifacts repositories delete document-portal --location=us-central1 --quiet
 ```
 
 ### **Step 4: Delete VPC and Networking Resources**
 ```bash
 # Delete firewall rules
-gcloud compute firewall-rules delete document-portal-allow-internal
-gcloud compute firewall-rules delete document-portal-allow-http-https
+gcloud compute firewall-rules delete document-portal-allow-internal --quiet
+gcloud compute firewall-rules delete document-portal-allow-http-https --quiet
 
 # Delete global IP address
-gcloud compute addresses delete document-portal-ip --global
+gcloud compute addresses delete document-portal-ip --global --quiet
 
 # Delete subnet
-gcloud compute networks subnets delete document-portal-subnet --region=us-central1
+gcloud compute networks subnets delete document-portal-subnet --region=us-central1 --quiet
 
 # Delete VPC network (must be last after all dependent resources)
-gcloud compute networks delete document-portal-vpc
+gcloud compute networks delete document-portal-vpc --quiet
 ```
 
 ### **Step 5: Delete GCP Secrets**
 ```bash
 # Delete all secrets
-gcloud secrets delete GROQ_API_KEY
-gcloud secrets delete GOOGLE_API_KEY
-gcloud secrets delete LANGCHAIN_API_KEY
+gcloud secrets delete GROQ_API_KEY --quiet
+gcloud secrets delete GOOGLE_API_KEY --quiet
+gcloud secrets delete LANGCHAIN_API_KEY --quiet
 ```
 
-### **Step 6: Remove Service Account and Permissions**
+### **Step 6: Delete Service Accounts**
 ```bash
-# Remove IAM policy bindings
-$PROJECT_ID = "build-test-468516"
-
-gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/container.admin"
-gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/artifactregistry.admin"
-gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/secretmanager.admin"
-gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/iam.serviceAccountUser"
-gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/compute.admin"
-gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/iam.serviceAccountAdmin"
-gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/resourcemanager.projectIamAdmin"
-gcloud projects remove-iam-policy-binding $PROJECT_ID --member="serviceAccount:github-actions@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/editor"
-
-# Delete service account keys
-gcloud iam service-accounts keys list --iam-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com --format="value(name)" | ForEach-Object { gcloud iam service-accounts keys delete $_ --iam-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com }
-
-# Delete service account
-gcloud iam service-accounts delete github-actions@$PROJECT_ID.iam.gserviceaccount.com
-```
-
-### **Step 7: Delete Local Files**
-```bash
-# Delete local service account key file
-Remove-Item -Path "github-actions-key.json" -Force -ErrorAction SilentlyContinue
+# Delete service accounts
+gcloud iam service-accounts delete document-portal-gke-sa@your-gcp-project-id.iam.gserviceaccount.com --quiet
+gcloud iam service-accounts delete github-actions@your-gcp-project-id.iam.gserviceaccount.com --quiet
 ```
 
 ### **Step 7: Verification Commands**
@@ -472,17 +410,17 @@ gcloud container clusters list --filter="name:document-portal*"
 gcloud compute networks list --filter="name:document-portal*"
 gcloud artifacts repositories list --location=us-central1
 gcloud secrets list
-gcloud iam service-accounts list --filter="email:github-actions@*"
+gcloud iam service-accounts list --filter="email:document-portal*"
 ```
 
 ### **Step 8: GitHub Cleanup (Manual)**
 1. Go to GitHub repo → Settings → Secrets and variables → Actions
-2. Delete secret: `GCP_SERVICE_ACCOUNT_KEY`
+2. Delete secrets: `GCP_SERVICE_ACCOUNT_KEY`, `GROQ_API_KEY`, `GOOGLE_API_KEY`, `LANGCHAIN_API_KEY`
 
 ## **Quick One-Line Cleanup (Nuclear Option)**
 ```bash
 # ⚠️ DANGER: This will delete EVERYTHING at once
-$PROJECT_ID="build-test-468516"; kubectl delete -f k8s/deployment.yaml; kubectl delete secret groq-api-key google-api-key; cd terraform; terraform destroy -auto-approve; cd ..; gcloud artifacts repositories delete document-portal --location=us-central1 --quiet; gcloud secrets delete GROQ_API_KEY GOOGLE_API_KEY --quiet; gcloud iam service-accounts delete github-actions@$PROJECT_ID.iam.gserviceaccount.com --quiet; Remove-Item -Path "github-actions-key.json", "terraform\.terraform*", "terraform\terraform.tfstate*" -Recurse -Force -ErrorAction SilentlyContinue
+kubectl delete -f k8s/deployment.yaml; kubectl delete secret groq-api-key google-api-key langchain-api-key; gcloud container clusters delete document-portal-cluster --zone=us-central1-b --quiet; gcloud artifacts repositories delete document-portal --location=us-central1 --quiet; gcloud compute firewall-rules delete document-portal-allow-internal document-portal-allow-http-https --quiet; gcloud compute addresses delete document-portal-ip --global --quiet; gcloud compute networks subnets delete document-portal-subnet --region=us-central1 --quiet; gcloud compute networks delete document-portal-vpc --quiet; gcloud secrets delete GROQ_API_KEY GOOGLE_API_KEY LANGCHAIN_API_KEY --quiet; gcloud iam service-accounts delete document-portal-gke-sa@your-gcp-project-id.iam.gserviceaccount.com github-actions@your-gcp-project-id.iam.gserviceaccount.com --quiet
 ```
 
 ---
@@ -494,7 +432,6 @@ $PROJECT_ID="build-test-468516"; kubectl delete -f k8s/deployment.yaml; kubectl 
 - ❌ Remove all Docker images and container registry
 - ❌ Delete all API keys and secrets (cannot be recovered)
 - ❌ Remove service accounts and access permissions
-- ❌ Delete local service account key files
 
 **Make sure you:**
 - ✅ Have backups of any important data
