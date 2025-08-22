@@ -14,14 +14,11 @@ RUN apt-get update && apt-get install -y build-essential poppler-utils && rm -rf
 # Create a non-root user with specific UID (matches Kubernetes)
 RUN groupadd -r appuser -g 1000 && useradd -r -u 1000 -g appuser appuser
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+# Copy project files first (needed for -e . in requirements.txt)
+COPY . .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy project files
-COPY . .
 
 # Create logs directory and set ownership
 RUN mkdir -p /app/logs && chown -R appuser:appuser /app
