@@ -37,7 +37,7 @@ class DocumentAnalyzer:
         Analyze a document's text and extract structured metadata & summary.
         """
         try:
-            chain = self.prompt | self.llm | self.fixing_parser
+            chain = self.prompt | self.llm | self.parser
             
             log.info("Meta-data analysis chain initialized")
 
@@ -52,6 +52,19 @@ class DocumentAnalyzer:
 
         except Exception as e:
             log.error("Metadata analysis failed", error=str(e))
-            raise DocumentPortalException("Metadata extraction failed",sys)
+            # Try with the fixing parser as fallback
+            try:
+                log.info("Attempting to fix output with OutputFixingParser")
+                raw_response = self.prompt.invoke({
+                    "format_instructions": self.parser.get_format_instructions(),
+                    "document_text": document_text
+                })
+                llm_response = self.llm.invoke(raw_response)
+                fixed_response = self.fixing_parser.parse(llm_response.content)
+                log.info("Output fixed successfully", keys=list(fixed_response.keys()))
+                return fixed_response
+            except Exception as fallback_error:
+                log.error("Fixing parser also failed", error=str(fallback_error))
+                raise DocumentPortalException("Metadata extraction failed",sys)
         
     

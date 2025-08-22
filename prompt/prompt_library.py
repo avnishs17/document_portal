@@ -2,13 +2,19 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 # Prompt for document analysis
 document_analysis_prompt = ChatPromptTemplate.from_template("""
-You are a highly capable assistant trained to analyze and summarize documents.
-Return ONLY valid JSON matching the exact schema below.
+You are a document analysis expert. Analyze the provided document and return ONLY valid JSON.
 
 {format_instructions}
 
-Analyze this document:
+Your task:
+1. Extract key information from the document
+2. Fill in all required fields in the JSON schema
+3. Return ONLY the JSON object, no other text or explanations
+
+Document to analyze:
 {document_text}
+
+IMPORTANT: Return ONLY valid JSON that matches the schema exactly. Do not include any explanatory text or markdown formatting.
 """)
 
 # Prompt for document comparison
