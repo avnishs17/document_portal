@@ -25,13 +25,13 @@ variable "project_id" {
 variable "region" {
   description = "The GCP region"
   type        = string
-  default     = "asia-south1"
+  default     = "us-central1"
 }
 
 variable "zone" {
   description = "The GCP zone"
   type        = string
-  default     = "asia-south1-b"
+  default     = "us-central1-b"
 }
 
 variable "cluster_name" {
@@ -232,8 +232,8 @@ resource "google_container_node_pool" "document_portal_nodes" {
   
   # Node configuration
   node_config {
-    machine_type = "e2-standard-4"  # 4 vCPUs, 16 GB RAM (much more powerful than Cloud Run)
-    disk_size_gb = 50
+    machine_type = "e2-standard-2"  # 2 vCPUs, 8 GB RAM (optimized for FastAPI + Streamlit)
+    disk_size_gb = 20
     disk_type    = "pd-ssd"
     
     # Service account

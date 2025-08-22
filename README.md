@@ -306,8 +306,8 @@ Access your application at: http://34.XXX.XXX.XXX
 
 | Feature | Cloud Run | GKE (This Setup) |
 |---------|-----------|------------------|
-| **CPU** | Max 4 vCPUs | Up to 96 vCPUs per node |
-| **Memory** | Max 8GB | Up to 360GB per node |
+| **CPU** | Max 4 vCPUs | 2 vCPUs (optimized for workload) |
+| **Memory** | Max 8GB | 8GB (optimized for workload) |
 | **Cold Starts** | Yes (0-5 seconds) | No |
 | **Auto Scaling** | Basic | Advanced (HPA, VPA, Cluster Autoscaler) |
 | **Networking** | Managed | Full VPC control |
@@ -318,7 +318,8 @@ Access your application at: http://34.XXX.XXX.XXX
 ## 🎯 **Performance Benefits**
 
 ### **Machine Types Available:**
-- **e2-standard-4**: 4 vCPUs, 16GB RAM (default)
+- **e2-standard-2**: 2 vCPUs, 8GB RAM (default - optimized for this workload)
+- **e2-standard-4**: 4 vCPUs, 16GB RAM
 - **e2-standard-8**: 8 vCPUs, 32GB RAM  
 - **e2-highmem-16**: 16 vCPUs, 128GB RAM
 - **c2-standard-16**: 16 vCPUs, 64GB RAM (compute optimized)

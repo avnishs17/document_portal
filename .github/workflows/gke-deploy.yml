@@ -7,8 +7,8 @@ on:
 
 env:
   GCP_PROJECT_ID: build-test-468516
-  GCP_REGION: asia-south1
-  GCP_ZONE: asia-south1-b
+  GCP_REGION: us-central1
+  GCP_ZONE: us-central1-b
   GKE_CLUSTER: document-portal-cluster
   REPOSITORY_NAME: document-portal
   IMAGE_NAME: document-portal
