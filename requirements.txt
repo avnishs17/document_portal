@@ -14,6 +14,7 @@ python-multipart==0.0.20
 PyMuPDF==1.26.3
 pypdf==6.0.0
 pandas==2.2.0
+psutil==5.9.8
 structlog==25.4.0
 docx2txt==0.9
 ipykernel==6.30.0

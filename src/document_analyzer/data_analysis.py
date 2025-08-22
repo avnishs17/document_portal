@@ -1,4 +1,5 @@
 import sys
+import psutil
 from utils.model_loader import ModelLoader
 from logger import GLOBAL_LOGGER as log
 from exception.custom_exception import DocumentPortalException
@@ -37,10 +38,21 @@ class DocumentAnalyzer:
         Analyze a document's text and extract structured metadata & summary.
         """
         try:
+            log.info("Starting document analysis", text_length=len(document_text))
+            
             chain = self.prompt | self.llm | self.parser
             
             log.info("Meta-data analysis chain initialized")
 
+            log.info("Invoking LLM chain...")
+            
+            # Log memory usage before LLM call
+            memory = psutil.virtual_memory()
+            log.info("Memory usage before LLM call", 
+                    available_mb=memory.available // (1024*1024),
+                    used_mb=memory.used // (1024*1024),
+                    percent=memory.percent)
+            
             response = chain.invoke({
                 "format_instructions": self.parser.get_format_instructions(),
                 "document_text": document_text

@@ -61,11 +61,11 @@ spec:
         # Resource requests and limits - optimized for available cluster capacity
         resources:
           requests:
-            memory: "4Gi"
+            memory: "2Gi"
             cpu: "1000m"
           limits:
-            memory: "8Gi"
-            cpu: "4000m"
+            memory: "4Gi"
+            cpu: "2000m"
         
         # Health checks - increased timeouts for LLM operations
         livenessProbe:
