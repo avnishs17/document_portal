@@ -224,8 +224,8 @@ gcloud auth login
 # Set your project ID
 $PROJECT_ID="build-test-468516"  # Your actual project ID
 gcloud config set project $PROJECT_ID
-gcloud config set compute/region asia-south1
-gcloud config set compute/zone asia-south1-b
+gcloud config set compute/region us-central1
+gcloud config set compute/zone us-central1-b
 ```
 
 ## **Setup Steps**
@@ -340,7 +340,7 @@ Access your application at: http://34.XXX.XXX.XXX
 gcloud components install kubectl
 
 # Get cluster credentials
-gcloud container clusters get-credentials document-portal-cluster --zone=asia-south1-b
+gcloud container clusters get-credentials document-portal-cluster --zone=us-central1-b
 
 # Check cluster info
 kubectl cluster-info
@@ -369,7 +369,7 @@ kubectl top pods
 kubectl scale deployment document-portal --replicas=5
 
 # Update node pool size
-gcloud container clusters resize document-portal-cluster --num-nodes=3 --zone=asia-south1-b
+gcloud container clusters resize document-portal-cluster --num-nodes=3 --zone=us-central1-b
 ```
 
 ---
@@ -405,10 +405,10 @@ Remove-Item -Path "terraform.tfstate*" -Force
 ### **Step 3: Delete Docker Images**
 ```bash
 # Delete all Docker images in the repository
-gcloud artifacts docker images list asia-south1-docker.pkg.dev/build-test-468516/document-portal --format="value(IMAGE_URI)" | ForEach-Object { gcloud artifacts docker images delete $_ }
+gcloud artifacts docker images list us-central1-docker.pkg.dev/build-test-468516/document-portal --format="value(IMAGE_URI)" | ForEach-Object { gcloud artifacts docker images delete $_ }
 
 # Delete the entire Artifact Registry repository
-gcloud artifacts.repositories.delete document-portal --location=asia-south1
+gcloud artifacts repositories delete document-portal --location=us-central1
 ```
 
 ### **Step 4: Delete VPC and Networking Resources**
@@ -421,7 +421,7 @@ gcloud compute firewall-rules delete document-portal-allow-http-https
 gcloud compute addresses delete document-portal-ip --global
 
 # Delete subnet
-gcloud compute networks subnets delete document-portal-subnet --region=asia-south1
+gcloud compute networks subnets delete document-portal-subnet --region=us-central1
 
 # Delete VPC network (must be last after all dependent resources)
 gcloud compute networks delete document-portal-vpc
@@ -467,7 +467,7 @@ Remove-Item -Path "github-actions-key.json" -Force -ErrorAction SilentlyContinue
 # Verify everything is deleted
 gcloud container clusters list --filter="name:document-portal*"
 gcloud compute networks list --filter="name:document-portal*"
-gcloud artifacts repositories list --location=asia-south1
+gcloud artifacts repositories list --location=us-central1
 gcloud secrets list
 gcloud iam service-accounts list --filter="email:github-actions@*"
 ```
@@ -479,7 +479,7 @@ gcloud iam service-accounts list --filter="email:github-actions@*"
 ## **Quick One-Line Cleanup (Nuclear Option)**
 ```bash
 # ⚠️ DANGER: This will delete EVERYTHING at once
-$PROJECT_ID="build-test-468516"; kubectl delete -f k8s/deployment.yaml; kubectl delete secret groq-api-key google-api-key; cd terraform; terraform destroy -auto-approve; cd ..; gcloud artifacts repositories delete document-portal --location=asia-south1 --quiet; gcloud secrets delete GROQ_API_KEY GOOGLE_API_KEY --quiet; gcloud iam service-accounts delete github-actions@$PROJECT_ID.iam.gserviceaccount.com --quiet; Remove-Item -Path "github-actions-key.json", "terraform\.terraform*", "terraform\terraform.tfstate*" -Recurse -Force -ErrorAction SilentlyContinue
+$PROJECT_ID="build-test-468516"; kubectl delete -f k8s/deployment.yaml; kubectl delete secret groq-api-key google-api-key; cd terraform; terraform destroy -auto-approve; cd ..; gcloud artifacts repositories delete document-portal --location=us-central1 --quiet; gcloud secrets delete GROQ_API_KEY GOOGLE_API_KEY --quiet; gcloud iam service-accounts delete github-actions@$PROJECT_ID.iam.gserviceaccount.com --quiet; Remove-Item -Path "github-actions-key.json", "terraform\.terraform*", "terraform\terraform.tfstate*" -Recurse -Force -ErrorAction SilentlyContinue
 ```
 
 ---

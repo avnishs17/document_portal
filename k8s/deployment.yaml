@@ -18,7 +18,7 @@ spec:
       serviceAccountName: document-portal-ksa  # Workload Identity
       containers:
       - name: document-portal
-        image: asia-south1-docker.pkg.dev/build-test-468516/document-portal/document-portal:latest
+        image: us-central1-docker.pkg.dev/build-test-468516/document-portal/document-portal:latest
         ports:
         - containerPort: 8080
           protocol: TCP
