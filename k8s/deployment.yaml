@@ -48,9 +48,9 @@ spec:
         
         # Application configuration
         - name: FAISS_BASE
-          value: "faiss_index"
+          value: "/app/faiss_index"
         - name: UPLOAD_BASE
-          value: "data"
+          value: "/app/data"
         - name: FAISS_INDEX_NAME
           value: "index"
         - name: DATA_STORAGE_PATH
