@@ -10,3 +10,4 @@ archive/
 notebook/
 data/
 github-actions-key.json
+aws/*

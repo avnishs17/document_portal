@@ -55,11 +55,13 @@ spec:
           value: "index"
         - name: DATA_STORAGE_PATH
           value: "/app/data"
+        - name: LANGCHAIN_PROJECT
+          value: "DOCUMENT PORTAL"
         
         # Resource requests and limits - optimized for available cluster capacity
         resources:
           requests:
-            memory: "2Gi"
+            memory: "4Gi"
             cpu: "1000m"
           limits:
             memory: "8Gi"

@@ -86,6 +86,8 @@ class ModelLoader:
         try:
             log.info("Loading embedding model...")
             model_name = self.config["embedding_model"]["model_name"]
+            # Set the API key as environment variable for Google AI client
+            os.environ["GOOGLE_API_KEY"] = self.api_keys["GOOGLE_API_KEY"]
             return GoogleGenerativeAIEmbeddings(model=model_name)
         except Exception as e:
             log.error("Error loading embedding model", error=str(e))
@@ -115,9 +117,10 @@ class ModelLoader:
         log.info("Loading LLM", provider=provider, model=model_name, temperature=temperature, max_tokens=max_tokens)
 
         if provider == "google":
+            # Set the API key as environment variable for Google AI client
+            os.environ["GOOGLE_API_KEY"] = self.api_keys["GOOGLE_API_KEY"]
             llm=ChatGoogleGenerativeAI(
                 model=model_name,
-                api_key=self.api_keys["GOOGLE_API_KEY"],
                 temperature=temperature,
                 max_output_tokens=max_tokens
             )
