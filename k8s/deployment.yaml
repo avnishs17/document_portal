@@ -71,10 +71,10 @@ spec:
           timeoutSeconds: 3
           failureThreshold: 3
         
-        # Security context
+        # Security context - matches Docker appuser
         securityContext:
           runAsNonRoot: true
-          runAsUser: 1000
+          runAsUser: 1000  # This should match the appuser UID
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: false
           capabilities:
