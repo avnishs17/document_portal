@@ -33,7 +33,17 @@ class DocumentComparatorLLM:
             return self._format_response(response)
         except Exception as e:
             log.error("Error in compare_documents", error=str(e))
-            raise DocumentPortalException("Error comparing documents", sys)
+            # Try with the fixing parser as fallback
+            try:
+                log.info("Attempting to fix output with OutputFixingParser")
+                raw_response = self.prompt.invoke(inputs)
+                llm_response = self.llm.invoke(raw_response)
+                fixed_response = self.fixing_parser.parse(llm_response.content)
+                log.info("Output fixed successfully", response_preview=str(fixed_response)[:200])
+                return self._format_response(fixed_response)
+            except Exception as fallback_error:
+                log.error("Fixing parser also failed", error=str(fallback_error))
+                raise DocumentPortalException("Error comparing documents", sys)
 
     def _format_response(self, response_parsed: list[dict]) -> pd.DataFrame: #type: ignore
         try:

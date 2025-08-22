@@ -16,6 +16,9 @@ spec:
         app: document-portal
     spec:
       serviceAccountName: document-portal-ksa  # Workload Identity
+      volumes:
+      - name: app-storage
+        emptyDir: {}  # Temporary storage for the pod
       containers:
       - name: document-portal
         image: us-central1-docker.pkg.dev/build-test-468516/document-portal/document-portal:latest
@@ -42,6 +45,16 @@ spec:
               name: langchain-api-key
               key: api-key
               optional: true
+        
+        # Application configuration
+        - name: FAISS_BASE
+          value: "faiss_index"
+        - name: UPLOAD_BASE
+          value: "data"
+        - name: FAISS_INDEX_NAME
+          value: "index"
+        - name: DATA_STORAGE_PATH
+          value: "/app/data"
         
         # Resource requests and limits (much more than Cloud Run allows)
         resources:
@@ -70,6 +83,18 @@ spec:
           periodSeconds: 5
           timeoutSeconds: 3
           failureThreshold: 3
+        
+        # Volume mounts for persistent storage
+        volumeMounts:
+        - name: app-storage
+          mountPath: /app/data
+          subPath: data
+        - name: app-storage
+          mountPath: /app/faiss_index
+          subPath: faiss_index
+        - name: app-storage
+          mountPath: /app/logs
+          subPath: logs
         
         # Security context - matches Docker appuser
         securityContext:
