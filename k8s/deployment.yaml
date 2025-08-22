@@ -90,7 +90,7 @@ metadata:
   labels:
     app: document-portal
 spec:
-  type: ClusterIP
+  type: NodePort
   ports:
   - port: 80
     targetPort: 8080
@@ -107,17 +107,16 @@ metadata:
   namespace: default
   annotations:
     kubernetes.io/ingress.global-static-ip-name: "document-portal-ip"
-    # networking.gke.io/managed-certificates: "document-portal-ssl-cert"  # Uncomment when you have a custom domain
     kubernetes.io/ingress.class: "gce"
-    # nginx.ingress.kubernetes.io/ssl-redirect: "true"  # Uncomment when using HTTPS with custom domain
+    cloud.google.com/load-balancer-type: "External"
   labels:
     app: document-portal
 spec:
   rules:
   - http:
       paths:
-      - path: /*
-        pathType: ImplementationSpecific
+      - path: /
+        pathType: Prefix
         backend:
           service:
             name: document-portal-service

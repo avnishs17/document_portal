@@ -249,16 +249,30 @@ jobs:
 
     - name: Get Load Balancer IP
       run: |
-        echo "Waiting for Load Balancer IP..."
-        sleep 60
-        EXTERNAL_IP=$(kubectl get ingress document-portal-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-        if [ -z "$EXTERNAL_IP" ]; then
-          EXTERNAL_IP="Pending"
-        fi
-        echo "Application deployed successfully!"
-        echo "External IP: $EXTERNAL_IP"
-        echo "Access your application at: http://$EXTERNAL_IP"
+        echo "Waiting for Load Balancer IP to be assigned..."
         
-        # Also show the static IP that was allocated
-        STATIC_IP=$(gcloud compute addresses describe document-portal-ip --global --format="value(address)")
-        echo "Static IP allocated: $STATIC_IP"
+        # Wait for ingress to be ready (up to 10 minutes)
+        for i in {1..60}; do
+          EXTERNAL_IP=$(kubectl get ingress document-portal-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+          if [ -n "$EXTERNAL_IP" ] && [ "$EXTERNAL_IP" != "null" ]; then
+            echo "✅ Load Balancer IP assigned: $EXTERNAL_IP"
+            break
+          fi
+          echo "⏳ Waiting for IP assignment... (attempt $i/60)"
+          sleep 10
+        done
+        
+        # Fallback to static IP if ingress IP is not assigned yet
+        if [ -z "$EXTERNAL_IP" ] || [ "$EXTERNAL_IP" = "null" ]; then
+          STATIC_IP=$(gcloud compute addresses describe document-portal-ip --global --format="value(address)")
+          echo "⚠️  Ingress IP not yet assigned, using static IP: $STATIC_IP"
+          echo "Note: It may take 5-10 minutes for the load balancer to be fully configured."
+          EXTERNAL_IP=$STATIC_IP
+        fi
+        
+        echo ""
+        echo "🎉 Application deployed successfully!"
+        echo "🌐 Access your application at: http://$EXTERNAL_IP"
+        echo "📊 API Documentation: http://$EXTERNAL_IP/docs"
+        echo ""
+        echo "📝 Note: If the application doesn't load immediately, wait 5-10 minutes for the load balancer to be fully configured."
