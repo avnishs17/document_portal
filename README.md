@@ -126,11 +126,9 @@ langsmith:
 
 ### **Setup for Production**
 1. **Get LangSmith API Key** from [LangSmith Console](https://smith.langchain.com/)
-2. **Add to GCP Secret Manager** (for production deployment):
-   ```bash
-   # Create the secret in GCP
-   echo "your-langsmith-api-key" | gcloud secrets create LANGCHAIN_API_KEY --data-file=-
-   ```
+2. **Add to GitHub Secrets** (for production deployment):
+   - Go to GitHub repo → **Settings** → **Secrets and variables** → **Actions**
+   - Create secret: `LANGCHAIN_API_KEY` with your LangSmith API key
 3. **Add to local environment** (for development):
    ```bash
    # Windows PowerShell
@@ -252,20 +250,25 @@ gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:gith
 gcloud iam service-accounts keys create github-actions-key.json --iam-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com
 ```
 
-### **Step 2: Create API Key Secrets**
-```bash
-# Create secrets with your actual API keys (replace with real values)
-echo -n "your-actual-groq-api-key" | gcloud secrets create GROQ_API_KEY --data-file=-
-echo -n "your-actual-google-api-key" | gcloud secrets create GOOGLE_API_KEY --data-file=-
-echo -n "your-actual-langchain-api-key" | gcloud secrets create LANGCHAIN_API_KEY --data-file=-
-```
-
-### **Step 3: Setup GitHub Secret**
+### **Step 2: Setup GitHub Secrets**
 1. Go to GitHub repo → **Settings** → **Secrets and variables** → **Actions**
-2. Click **New repository secret**
-3. Name: `GCP_SERVICE_ACCOUNT_KEY`
-4. Value: Copy **entire content** of `github-actions-key.json` file
-5. Click **Add secret**
+2. Click **New repository secret** for each of the following:
+
+#### **Required Secrets:**
+- **Name**: `GCP_SERVICE_ACCOUNT_KEY`
+  - **Value**: Copy **entire content** of `github-actions-key.json` file
+
+- **Name**: `GROQ_API_KEY`
+  - **Value**: Your actual GROQ API key
+
+- **Name**: `GOOGLE_API_KEY`
+  - **Value**: Your actual Google AI API key
+
+#### **Optional Secret (for LangSmith tracking):**
+- **Name**: `LANGCHAIN_API_KEY`
+  - **Value**: Your actual LangSmith API key (optional)
+
+3. Click **Add secret** for each one
 
 ---
 

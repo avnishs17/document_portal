@@ -211,23 +211,18 @@ jobs:
       run: |
         gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --zone=${{ env.GCP_ZONE }} --project=${{ env.GCP_PROJECT_ID }}
 
-    - name: Create Kubernetes Secrets from GCP Secret Manager
+    - name: Create Kubernetes Secrets from GitHub Secrets
       run: |
-        # Get secrets from Secret Manager and create Kubernetes secrets
-        GROQ_API_KEY=$(gcloud secrets versions access latest --secret="GROQ_API_KEY" --project=${{ env.GCP_PROJECT_ID }})
-        GOOGLE_API_KEY=$(gcloud secrets versions access latest --secret="GOOGLE_API_KEY" --project=${{ env.GCP_PROJECT_ID }})
-        
-        # Create or update Kubernetes secrets
-        kubectl create secret generic groq-api-key --from-literal=api-key="$GROQ_API_KEY" --dry-run=client -o yaml | kubectl apply -f -
-        kubectl create secret generic google-api-key --from-literal=api-key="$GOOGLE_API_KEY" --dry-run=client -o yaml | kubectl apply -f -
+        # Create Kubernetes secrets from GitHub Secrets
+        kubectl create secret generic groq-api-key --from-literal=api-key="${{ secrets.GROQ_API_KEY }}" --dry-run=client -o yaml | kubectl apply -f -
+        kubectl create secret generic google-api-key --from-literal=api-key="${{ secrets.GOOGLE_API_KEY }}" --dry-run=client -o yaml | kubectl apply -f -
         
         # Optional: Create LangChain API key secret if it exists (for LangSmith tracking)
-        if gcloud secrets describe "LANGCHAIN_API_KEY" --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
+        if [ -n "${{ secrets.LANGCHAIN_API_KEY }}" ]; then
           echo "Creating LangChain API key secret for LangSmith tracking..."
-          LANGCHAIN_API_KEY=$(gcloud secrets versions access latest --secret="LANGCHAIN_API_KEY" --project=${{ env.GCP_PROJECT_ID }})
-          kubectl create secret generic langchain-api-key --from-literal=api-key="$LANGCHAIN_API_KEY" --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create secret generic langchain-api-key --from-literal=api-key="${{ secrets.LANGCHAIN_API_KEY }}" --dry-run=client -o yaml | kubectl apply -f -
         else
-          echo "LangChain API key not found in Secret Manager - LangSmith tracking will be disabled"
+          echo "LangChain API key not found in GitHub Secrets - LangSmith tracking will be disabled"
         fi
 
     - name: Update deployment image
