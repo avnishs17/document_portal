@@ -130,6 +130,14 @@ jobs:
           echo "❌ Global IP not found - will be created"
         fi
         
+        # Check and import Artifact Registry repository
+        if gcloud artifacts repositories describe ${{ env.REPOSITORY_NAME }} --location=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
+          echo "✅ Found existing Artifact Registry repository - importing..."
+          terraform import google_artifact_registry_repository.document_portal_repo projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_REGION }}/repositories/${{ env.REPOSITORY_NAME }} || true
+        else
+          echo "❌ Artifact Registry repository not found - will be created"
+        fi
+        
         # Check and import GKE cluster
         if gcloud container clusters describe ${{ env.GKE_CLUSTER }} --zone=${{ env.GCP_ZONE }} --project=${{ env.GCP_PROJECT_ID }} >/dev/null 2>&1; then
           echo "✅ Found existing GKE cluster - importing..."

@@ -57,6 +57,17 @@ resource "google_project_service" "required_apis" {
   disable_on_destroy = false
 }
 
+# Artifact Registry Repository
+resource "google_artifact_registry_repository" "document_portal_repo" {
+  location      = var.region
+  repository_id = "document-portal"
+  description   = "Docker repository for Document Portal application"
+  format        = "DOCKER"
+  project       = var.project_id
+
+  depends_on = [google_project_service.required_apis]
+}
+
 # Custom VPC Network
 resource "google_compute_network" "document_portal_vpc" {
   name                    = "document-portal-vpc"
@@ -292,4 +303,14 @@ output "static_ip" {
 output "service_account_email" {
   description = "GKE service account email"
   value       = google_service_account.gke_service_account.email
+}
+
+output "artifact_registry_repository" {
+  description = "Artifact Registry repository name"
+  value       = google_artifact_registry_repository.document_portal_repo.name
+}
+
+output "docker_repository_url" {
+  description = "Docker repository URL for pushing images"
+  value       = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.document_portal_repo.repository_id}"
 }
